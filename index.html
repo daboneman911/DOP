@@ -10,6 +10,7 @@
       --muted: #8b95b5; --border: rgba(255, 255, 255, .08); --accent: #6366f1;
       --good: #34d399; --good-bg: rgba(52, 211, 153, .14); --short: #fb7185;
       --over: #fbbf24; --moved: #60a5fa; --moved-bg: rgba(96, 165, 250, .12);
+      --role-unloader: #818cf8; --role-sweep: #fbbf24; --role-belt: #2dd4bf;
       --radius: 16px;
     }
     * { box-sizing: border-box; }
@@ -34,6 +35,34 @@
     }
     .section-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 
+    /* Role timers */
+    .timer { background: var(--surface-2); border-radius: 12px; padding: 12px; }
+    .timer + .timer { margin-top: 10px; }
+    .timer-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .timer-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .timer-count { display: block; color: var(--muted); font-size: .75rem; font-weight: 600; margin: 2px 0 0 16px; }
+    .timer-hrs { text-align: right; font-variant-numeric: tabular-nums; }
+    .timer-hrs b { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
+    .timer-hrs small { color: var(--muted); font-weight: 600; margin-left: 2px; }
+    .timer-hrs span { display: block; color: var(--muted); font-size: .72rem; }
+    .timer-hrs span.warn { color: var(--short); }
+    .timer-times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .time-field { min-width: 0; }
+    .time-field label { display: block; font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    /* Time inputs carry a large built-in width on iOS; reset it so they fit their column. */
+    .time-field input {
+      display: block; width: 100%; max-width: 100%; min-width: 0; height: 42px; margin: 0; padding: 0 10px;
+      -webkit-appearance: none; appearance: none; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font: inherit; font-weight: 700; color-scheme: dark;
+    }
+    .time-field input::-webkit-date-and-time-value { text-align: left; }
+    .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding: 0 2px; font-weight: 700; }
+    .total b { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+    .role-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .role-dot.unloader { background: var(--role-unloader); }
+    .role-dot.sweep { background: var(--role-sweep); }
+    .role-dot.belt { background: var(--role-belt); }
+
     /* Plan selector */
     .segmented { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; }
     .segmented button {
@@ -41,19 +70,6 @@
       color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
     }
     .segmented button[aria-checked="true"] { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, .4); }
-
-    /* Shift clock */
-    .shift { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: stretch; }
-    .field { background: var(--surface-2); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .field label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-    .field input {
-      width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text);
-      font: inherit; font-weight: 700; padding: 6px 8px; color-scheme: dark; min-width: 0;
-    }
-    .hours { text-align: center; justify-content: center; }
-    .hours .v { font-size: 1.6rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
-    .hours .sub { font-size: .72rem; color: var(--muted); }
-    .shift-note { color: var(--muted); font-size: .75rem; text-align: center; margin-top: 10px; }
 
     /* Tally */
     .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 14px; }
@@ -64,11 +80,14 @@
     .progress { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 14px; }
     .progress div { height: 100%; width: 0; background: var(--short); border-radius: 99px; transition: width .25s, background .25s; }
     .progress div.is-good { background: var(--good); } .progress div.is-over { background: var(--over); }
-    .status { text-align: center; margin-top: 10px; font-weight: 600; font-size: .9rem; color: var(--muted); min-height: 1.2em; }
+    .split { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: .82rem; font-weight: 600; color: var(--muted); }
+    .split span { display: inline-flex; align-items: center; gap: 6px; }
+    .split b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .status { text-align: center; margin-top: 8px; font-weight: 600; font-size: .9rem; color: var(--muted); min-height: 1.2em; }
 
     /* Roster */
-    .roster-head { display: flex; justify-content: space-between; align-items: baseline; }
-    .hint { color: var(--muted); font-size: .78rem; }
+    .roster-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .hint { color: var(--muted); font-size: .78rem; margin-bottom: 10px; }
     .roster { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .emp {
       display: flex; align-items: stretch; background: var(--surface-2); border: 1px solid var(--border);
@@ -85,6 +104,7 @@
     }
     .emp-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .emp-sub { display: block; font-size: .7rem; font-weight: 600; color: var(--muted); }
+    .emp-sub .r-sweep { color: var(--role-sweep); } .emp-sub .r-belt { color: var(--role-belt); }
     .emp-opts {
       border: 0; border-left: 1px solid var(--border); background: transparent; width: 40px; flex: none;
       cursor: pointer; color: var(--muted); font-size: 1.2rem; line-height: 1;
@@ -125,6 +145,12 @@
     .sheet-head .avatar { width: 42px; height: 42px; font-size: 1rem; }
     .sheet-head h2 { margin: 0; font-size: 1.15rem; }
     .sheet-head p { margin: 2px 0 0; color: var(--muted); font-size: .85rem; }
+    .roles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
+    .roles button {
+      padding: 10px 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg);
+      cursor: pointer; font-weight: 700; font-size: .8rem;
+    }
+    .roles button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
     .actions { display: grid; gap: 8px; }
     .action {
       display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border-radius: 12px;
@@ -151,20 +177,14 @@
 <body>
 <div class="container">
   <header>
-    <div>
-      <h1><span>PS9</span> DOP Tracker</h1>
-      <div class="date" id="date"></div>
-    </div>
+    <h1><span>PS9</span> DOP Tracker</h1>
+    <div class="date" id="date"></div>
   </header>
 
   <section class="card">
-    <p class="section-label">Shift</p>
-    <div class="shift">
-      <div class="field"><label for="startTime">Start</label><input type="time" id="startTime" step="300"></div>
-      <div class="field"><label for="endTime">End</label><input type="time" id="endTime" step="300"></div>
-      <div class="field hours"><label>Hours</label><div class="v" id="vHours">0:00</div><div class="sub" id="hoursSub"></div></div>
-    </div>
-    <div class="shift-note" id="shiftNote"></div>
+    <p class="section-label">Hours by role</p>
+    <div id="timers"></div>
+    <div class="total"><span>Total labor hours</span><b id="vTotal">0.00</b></div>
   </section>
 
   <section class="card">
@@ -176,13 +196,14 @@
       <div class="stat"><div class="k">Down</div><div class="v" id="vDown">0</div></div>
     </div>
     <div class="progress"><div id="bar"></div></div>
+    <div class="split" id="split"></div>
     <div class="status" id="status"></div>
   </section>
 
   <section class="card">
     <div class="roster-head">
       <p class="section-label">Roster</p>
-      <span class="hint">Tap a name to mark working · ⋯ for options</span>
+      <span class="hint">Tap a name to mark working · ⋯ for role &amp; options</span>
     </div>
     <div class="roster" id="roster"></div>
   </section>
@@ -209,6 +230,8 @@
       <div class="avatar" id="sAvatar"></div>
       <div><h2 id="sName"></h2><p id="sStatus"></p></div>
     </div>
+    <p class="section-label">Role</p>
+    <div class="roles" id="sRoles"></div>
     <div class="actions" id="sActions"></div>
     <div id="sLines" hidden>
       <p class="section-label" style="margin-top:16px">Move to PS line</p>
@@ -222,7 +245,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.1.0";
+  var VERSION = "2.2.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   var PLANS = {
@@ -230,13 +253,19 @@
     "6-2": { unloaders: 6, sweeps: 2 },
     "7-2": { unloaders: 7, sweeps: 2 }
   };
+  // Belt tender is tracked and timed but sits outside the DOP headcount.
+  var ROLES = [
+    { key: "unloader", label: "Unloaders", one: "Unloader" },
+    { key: "sweep", label: "Sweeps", one: "Sweep" },
+    { key: "belt", label: "Belt tender", one: "Belt tender" }
+  ];
   var HOME = "PS9";
   var OTHER_LINES = ["PS1", "PS2", "PS3", "PS4", "PS5", "PS6", "PS7", "PS8", "PS10", "PS11", "PS12"];
   var STORE_KEY = "ps9-dop-tracker";
   var LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24" fill="currentColor" aria-label="Locked"><path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V7Z"/></svg>';
 
   // The shift runs past midnight, so anything before noon belongs to the previous
-  // day's shift. That keeps the board, start time, and hours intact at 12 AM.
+  // day's shift. That keeps the board, start times, and hours intact at 12 AM.
   var ROLLOVER_HOUR = 12;
   var shiftDay = new Date();
   if (shiftDay.getHours() < ROLLOVER_HOUR) shiftDay.setDate(shiftDay.getDate() - 1);
@@ -248,15 +277,21 @@
     return day.getDay() === 5 ? "19:30" : "20:00";
   }
 
-  // Per-employee state: { present, locked, moved: null | "PS5" }. Saved for the current
-  // shift only, so a refresh keeps the board and the next shift starts clean.
+  // Per-employee state: { present, at, locked, moved: null | "PS5", role: "auto" | role key }.
+  // "at" is when they were marked working, used to pick automatic sweeps. Saved for the
+  // current shift only, so a refresh keeps the board and the next shift starts clean.
   var state = load();
   var openName = null;
 
+  function blankPerson() {
+    return { present: false, at: 0, locked: false, moved: null, role: "auto" };
+  }
+
   function blank() {
-    var people = {};
-    STAFF.forEach(function (n) { people[n] = { present: false, locked: false, moved: null }; });
-    return { date: today, plan: "7-2", start: defaultStart(shiftDay), end: "", people: people };
+    var people = {}, times = {};
+    STAFF.forEach(function (n) { people[n] = blankPerson(); });
+    ROLES.forEach(function (r) { times[r.key] = { start: defaultStart(shiftDay), end: "" }; });
+    return { date: today, plan: "7-2", times: times, people: people };
   }
 
   function load() {
@@ -265,9 +300,15 @@
       var saved = JSON.parse(localStorage.getItem(STORE_KEY));
       if (saved && saved.date === today) {
         if (PLANS[saved.plan]) s.plan = saved.plan;
-        if (saved.start) s.start = saved.start;
-        if (saved.end) s.end = saved.end;
-        STAFF.forEach(function (n) { if (saved.people && saved.people[n]) s.people[n] = saved.people[n]; });
+        ROLES.forEach(function (r) {
+          // Earlier versions kept one start/end for the whole shift.
+          var t = (saved.times && saved.times[r.key]) || { start: saved.start, end: saved.end };
+          if (t.start) s.times[r.key].start = t.start;
+          if (t.end) s.times[r.key].end = t.end;
+        });
+        STAFF.forEach(function (n) {
+          if (saved.people && saved.people[n]) s.people[n] = Object.assign(blankPerson(), saved.people[n]);
+        });
       }
     } catch (e) {}
     return s;
@@ -275,6 +316,31 @@
 
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  // Effective role for everyone working on PS9. Explicit roles win; open sweep slots go
+  // to "auto" people, latest to check in first, and the rest of "auto" are unloaders.
+  function assignRoles() {
+    var plan = PLANS[state.plan];
+    var eff = {}, autoSweep = {};
+    var working = STAFF.filter(function (n) { var p = state.people[n]; return p.present && !p.moved; });
+    working.forEach(function (n) {
+      var r = state.people[n].role;
+      eff[n] = r === "auto" ? "unloader" : r;
+    });
+    var open = plan.sweeps - working.filter(function (n) { return eff[n] === "sweep"; }).length;
+    working
+      .filter(function (n) { return state.people[n].role === "auto"; })
+      .sort(function (a, b) { return state.people[b].at - state.people[a].at; })
+      .slice(0, Math.max(0, open))
+      .forEach(function (n) { eff[n] = "sweep"; autoSweep[n] = true; });
+    return { eff: eff, autoSweep: autoSweep };
+  }
+
+  function roleCounts(eff) {
+    var c = { unloader: 0, sweep: 0, belt: 0 };
+    Object.keys(eff).forEach(function (n) { c[eff[n]]++; });
+    return c;
   }
 
   // "HH:MM" on the shift day. A time before noon is after midnight, so it falls on
@@ -287,25 +353,85 @@
     return d;
   }
 
-  function fmtClock(d) {
-    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  function fmtDuration(mins) {
+    return Math.floor(mins / 60) + ':' + ('0' + mins % 60).slice(-2);
+  }
+
+  function timeInput(id, label, value, onChange) {
+    var wrap = document.createElement('div');
+    wrap.className = 'time-field';
+    wrap.innerHTML = '<label></label><input type="time" step="300">';
+    var input = wrap.querySelector('input');
+    input.id = id;
+    wrap.querySelector('label').htmlFor = id;
+    wrap.querySelector('label').textContent = label;
+    input.value = value;
+    input.addEventListener('change', function () { onChange(input); });
+    return wrap;
+  }
+
+  // Built once; the hours readouts are refreshed in place by renderHours so typing in a
+  // time field is never interrupted by a rebuild.
+  function buildTimers() {
+    var el = document.getElementById('timers');
+    ROLES.forEach(function (r) {
+      var t = state.times[r.key];
+      var box = document.createElement('div');
+      box.className = 'timer';
+      box.innerHTML =
+        '<div class="timer-head">' +
+          '<div><div class="timer-name"><span class="role-dot ' + r.key + '"></span>' + r.label + '</div>' +
+          '<span class="timer-count" id="tc-' + r.key + '"></span></div>' +
+          '<div class="timer-hrs"><b id="th-' + r.key + '">0.00</b><small>hrs</small><span id="ts-' + r.key + '"></span></div>' +
+        '</div>' +
+        '<div class="timer-times"></div>';
+      var times = box.querySelector('.timer-times');
+      times.appendChild(timeInput('start-' + r.key, 'Start', t.start, function (input) {
+        t.start = input.value || defaultStart(shiftDay);
+        input.value = t.start;
+        save(); renderHours();
+      }));
+      times.appendChild(timeInput('end-' + r.key, 'End', t.end, function (input) {
+        t.end = input.value;
+        save(); renderHours();
+      }));
+      el.appendChild(box);
+    });
   }
 
   function renderHours() {
-    var start = shiftTime(state.start || defaultStart(shiftDay));
-    var end = state.end ? shiftTime(state.end) : new Date();
-    var mins = Math.max(0, Math.floor((end - start) / 60000));
-    document.getElementById('vHours').textContent = Math.floor(mins / 60) + ':' + ('0' + mins % 60).slice(-2);
-    document.getElementById('hoursSub').textContent =
-      state.end ? (mins / 60).toFixed(2) + ' hrs total' : end < start ? 'Not started' : 'Running';
-    document.getElementById('shiftNote').textContent =
-      (new Date() < start ? 'Starts ' : 'Started ') + fmtClock(start) + ' ' + start.toLocaleDateString(undefined, { weekday: 'short' }) +
-      (state.end ? ' · Ended ' + fmtClock(end) + ' ' + end.toLocaleDateString(undefined, { weekday: 'short' }) : ' · Leave End blank for a live count');
+    var counts = roleCounts(assignRoles().eff);
+    var now = new Date();
+    var total = 0;
+    ROLES.forEach(function (r) {
+      var t = state.times[r.key];
+      var start = shiftTime(t.start || defaultStart(shiftDay));
+      var end = t.end ? shiftTime(t.end) : now;
+      var mins = Math.max(0, Math.floor((end - start) / 60000));
+      var n = counts[r.key];
+      var labor = mins / 60 * n;
+      total += labor;
+
+      document.getElementById('tc-' + r.key).textContent = n + ' working';
+      document.getElementById('th-' + r.key).textContent = labor.toFixed(2);
+      var sub = document.getElementById('ts-' + r.key);
+      var warn = t.end && end < start;
+      sub.className = warn ? 'warn' : '';
+      sub.textContent = warn ? 'End is before start'
+        : !t.end && now < start ? 'Not started'
+        : fmtDuration(mins) + ' each' + (t.end ? '' : ' · running');
+    });
+    document.getElementById('vTotal').textContent = total.toFixed(2);
   }
 
   function requiredFor(key) {
     var p = PLANS[key];
     return p ? p.unloaders + p.sweeps : 0;
+  }
+
+  function roleLabel(key) {
+    for (var i = 0; i < ROLES.length; i++) if (ROLES[i].key === key) return ROLES[i].one;
+    return "Auto";
   }
 
   function statusText(p) {
@@ -353,7 +479,12 @@
     });
   }
 
-  function renderRoster() {
+  function setPresent(p, on) {
+    p.present = on;
+    p.at = on ? Date.now() : 0;
+  }
+
+  function renderRoster(roles) {
     var el = document.getElementById('roster');
     el.innerHTML = '';
     STAFF.forEach(function (name) {
@@ -369,19 +500,29 @@
       nameBtn.querySelector('.avatar').textContent = name.charAt(0);
       var label = nameBtn.querySelector('.emp-label');
       label.textContent = name;
-      if (p.moved || p.present) {
+
+      // Sub-line: where they are, and their role when it is not a plain unloader.
+      var role = roles.eff[name] || (p.role !== "auto" ? p.role : null);
+      var parts = [];
+      if (p.moved) parts.push('→ ' + p.moved);
+      else if (p.present) parts.push('Working');
+      if (!p.moved && role && role !== 'unloader') {
+        parts.push('<span class="r-' + role + '">' + roleLabel(role) + (roles.autoSweep[name] ? ' (auto)' : '') + '</span>');
+      }
+      if (parts.length) {
         var sub = document.createElement('span');
         sub.className = 'emp-sub';
-        sub.textContent = p.moved ? '→ ' + p.moved : 'Working';
+        sub.innerHTML = parts.join(' · ');
         label.appendChild(sub);
       }
+
       nameBtn.addEventListener('click', function () {
         if (p.locked || p.moved) {
           tile.classList.remove('shake'); void tile.offsetWidth; tile.classList.add('shake');
           toast(name + (p.moved ? ' is on ' + p.moved : ' is locked') + ' — use ⋯ options');
           return;
         }
-        p.present = !p.present;
+        setPresent(p, !p.present);
         save(); render();
       });
 
@@ -399,7 +540,10 @@
   }
 
   function render() {
+    var plan = PLANS[state.plan];
     var dop = requiredFor(state.plan);
+    var roles = assignRoles();
+    var counts = roleCounts(roles.eff);
     var working = [], moved = [], absent = [];
     STAFF.forEach(function (n) {
       var p = state.people[n];
@@ -407,7 +551,8 @@
       else if (p.present) working.push({ name: n });
       else absent.push({ name: n });
     });
-    var count = working.length;
+    // Only unloaders and sweeps count toward the DOP.
+    var count = counts.unloader + counts.sweep;
     var diff = count - dop;
     var down = Math.max(0, -diff);
 
@@ -421,10 +566,15 @@
     bar.style.width = Math.min(100, dop ? count / dop * 100 : 0) + '%';
     bar.className = diff === 0 ? 'is-good' : diff > 0 ? 'is-over' : '';
 
+    document.getElementById('split').innerHTML =
+      '<span><i class="role-dot unloader"></i>Unloaders <b>' + counts.unloader + '/' + plan.unloaders + '</b></span>' +
+      '<span><i class="role-dot sweep"></i>Sweeps <b>' + counts.sweep + '/' + plan.sweeps + '</b></span>' +
+      '<span><i class="role-dot belt"></i>Belt tender <b>' + counts.belt + '</b></span>';
+
     document.getElementById('status').textContent =
       diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : down + ' needed to make plan';
 
-    document.getElementById('cWorking').textContent = count;
+    document.getElementById('cWorking').textContent = working.length;
     document.getElementById('cMoved').textContent = moved.length;
     document.getElementById('cAbsent').textContent = absent.length;
     chips(document.getElementById('listWorking'), working);
@@ -432,7 +582,8 @@
     chips(document.getElementById('listAbsent'), absent);
 
     renderPlans();
-    renderRoster();
+    renderRoster(roles);
+    renderHours();
     if (openName) renderSheet();
   }
 
@@ -454,11 +605,22 @@
     document.getElementById('sName').textContent = name;
     document.getElementById('sStatus').textContent = statusText(p) + (p.locked ? ' · Locked' : '');
 
+    var rolesEl = document.getElementById('sRoles');
+    rolesEl.innerHTML = '';
+    [{ key: "auto", one: "Auto" }].concat(ROLES).forEach(function (r) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = r.one;
+      b.setAttribute('aria-pressed', p.role === r.key ? 'true' : 'false');
+      b.addEventListener('click', function () { p.role = r.key; save(); render(); });
+      rolesEl.appendChild(b);
+    });
+
     var acts = document.getElementById('sActions');
     acts.innerHTML = '';
     if (!p.moved) {
       acts.appendChild(action(p.present ? '✕' : '✓', p.present ? 'Mark not working' : 'Mark working', function () {
-        p.present = !p.present; save(); render();
+        setPresent(p, !p.present); save(); render();
       }));
     }
     acts.appendChild(action(p.locked ? '🔓' : '🔒', p.locked ? 'Unlock' : 'Lock (tap on name disabled)', function () {
@@ -482,7 +644,7 @@
       b.textContent = line;
       b.setAttribute('aria-current', p.moved === line ? 'true' : 'false');
       b.addEventListener('click', function () {
-        p.moved = line; p.present = false;
+        p.moved = line; setPresent(p, false);
         linesWrap.hidden = true;
         save(); render();
         toast(name + ' moved to ' + line);
@@ -505,22 +667,8 @@
   document.getElementById('date').textContent =
     shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;
 
-  var startEl = document.getElementById('startTime');
-  var endEl = document.getElementById('endTime');
-  startEl.value = state.start;
-  endEl.value = state.end;
-  startEl.addEventListener('change', function () {
-    state.start = startEl.value || defaultStart(shiftDay);
-    startEl.value = state.start;
-    save(); renderHours();
-  });
-  endEl.addEventListener('change', function () {
-    state.end = endEl.value;
-    save(); renderHours();
-  });
+  buildTimers();
   setInterval(renderHours, 30000);
-
-  renderHours();
   render();
 </script>
 </body>

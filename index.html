@@ -41,8 +41,7 @@
     .tally .k { font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
     .tally .v { font-size: 1.75rem; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
     .v.is-good { color: var(--good); } .v.is-short { color: var(--short); } .v.is-over { color: var(--over); }
-    .status { text-align: center; margin-top: 12px; font-weight: 600; font-size: .95rem; }
-    .breakdown { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 6px; }
+    .status { text-align: center; margin-top: 12px; font-weight: 600; font-size: .95rem; min-height: 1.2em; }
 
     .list-title { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; margin: 0 0 6px; }
     .name-list { margin: 0 0 14px; padding: 0; list-style: none; font-size: .95rem; line-height: 1.6; }
@@ -58,11 +57,11 @@
   <h1>DOP Attendance Dashboard</h1>
 
   <div class="card">
-    <label for="dopSelect">Daily Operating Plan — required headcount</label>
+    <label for="dopSelect">Daily Operating Plan</label>
     <select id="dopSelect">
-      <option value="5-2">7 required — 5-2</option>
-      <option value="6-2">8 required — 6-2</option>
-      <option value="7-2" selected>9 required — 7-2</option>
+      <option value="5-2">5-2</option>
+      <option value="6-2">6-2</option>
+      <option value="7-2" selected>7-2</option>
     </select>
   </div>
 
@@ -79,10 +78,9 @@
     <div class="tally">
       <div><div class="k">Required</div><div class="v" id="vRequired">9</div></div>
       <div><div class="k">Present</div><div class="v" id="vPresent">0</div></div>
-      <div><div class="k">Variance</div><div class="v" id="vVariance">0</div></div>
+      <div><div class="k">Down</div><div class="v" id="vDown">0</div></div>
     </div>
     <div class="status" id="status"></div>
-    <div class="breakdown" id="breakdown"></div>
   </div>
 
   <div class="card">
@@ -140,14 +138,13 @@
     document.getElementById('vRequired').textContent = required;
     document.getElementById('vPresent').textContent = count;
 
-    var vEl = document.getElementById('vVariance');
-    vEl.textContent = diff > 0 ? '+' + diff : String(diff);
-    vEl.className = 'v ' + (diff === 0 ? 'is-good' : diff < 0 ? 'is-short' : 'is-over');
+    var down = Math.max(0, -diff);
+    var dEl = document.getElementById('vDown');
+    dEl.textContent = down;
+    dEl.className = 'v ' + (down === 0 ? 'is-good' : 'is-short');
 
     document.getElementById('status').textContent =
-      diff === 0 ? 'On plan' : diff < 0 ? (-diff) + ' short of plan' : '+' + diff + ' over plan';
-    document.getElementById('breakdown').textContent =
-      key + ' — ' + plan.unloaders + ' unloaders + ' + plan.sweeps + ' bulk sweeps = ' + required + ' required';
+      diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : '';
 
     document.getElementById('cPresent').textContent = count;
     document.getElementById('cAbsent').textContent = absentNames.length;

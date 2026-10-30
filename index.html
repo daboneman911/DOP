@@ -198,6 +198,8 @@
 <div class="toast" id="toast" role="status"></div>
 
 <script>
+  // Bump on every change that ships, so the version on screen shows which build is loaded.
+  var VERSION = "2.0.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   var PLANS = {
@@ -438,7 +440,7 @@
   document.getElementById('sClose').addEventListener('click', function () { sheet.close(); });
 
   document.getElementById('date').textContent =
-    new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+    new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' · v' + VERSION;
   render();
 </script>
 </body>

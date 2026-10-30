@@ -10,6 +10,7 @@
       --muted: #8b95b5; --border: rgba(255, 255, 255, .08); --accent: #6366f1;
       --good: #34d399; --good-bg: rgba(52, 211, 153, .14); --short: #fb7185;
       --over: #fbbf24; --moved: #60a5fa; --moved-bg: rgba(96, 165, 250, .12);
+      --cut: #fb923c; --cut-bg: rgba(251, 146, 60, .10);
       --role-unloader: #818cf8; --role-sweep: #fbbf24; --role-belt: #2dd4bf;
       --radius: 16px;
     }
@@ -36,20 +37,16 @@
     .section-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 
     /* Hours */
-    .hours-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-    .hours-note { color: var(--muted); font-size: .75rem; font-weight: 600; }
-    .hours-note.warn { color: var(--short); }
-    .shift-times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .time-field { min-width: 0; }
-    .time-field label { display: block; font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-    /* Time inputs carry a large built-in width on iOS; reset it so they fit their column. */
-    .time-field input {
-      display: block; width: 100%; max-width: 100%; min-width: 0; height: 40px; margin: 0; padding: 0 10px;
-      -webkit-appearance: none; appearance: none; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font: inherit; font-weight: 700; color-scheme: dark;
+    .hours-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .hours-head .section-label { margin: 0; }
+    .shift-state { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .78rem; font-weight: 600; }
+    .shift-state b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .pill-btn {
+      border: 0; border-radius: 99px; padding: 6px 12px; background: var(--accent); color: #fff;
+      font-size: .75rem; font-weight: 700; cursor: pointer;
     }
-    .time-field input::-webkit-date-and-time-value { text-align: left; }
-    .role-hours { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; text-align: center; }
+    .pill-btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .role-hours { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
     .role-hours div { background: var(--surface-2); border-radius: 10px; padding: 8px 4px; min-width: 0; }
     .role-hours .k { display: flex; justify-content: center; align-items: center; gap: 5px; font-size: .68rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
     .role-hours .v { font-size: 1.05rem; font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -110,6 +107,9 @@
     .emp.present { background: var(--good-bg); border-color: rgba(52, 211, 153, .5); }
     .emp.present .avatar { background: var(--good); color: #052e1f; }
     .emp.present .emp-sub { color: var(--good); }
+    .emp.cut { background: var(--cut-bg); border-color: rgba(251, 146, 60, .45); border-style: dashed; }
+    .emp.cut .avatar { background: var(--cut); color: #2a1204; }
+    .emp.cut .emp-sub { color: var(--cut); }
     .emp.moved { background: var(--moved-bg); border-color: rgba(96, 165, 250, .35); border-style: dashed; }
     .emp.moved .avatar { background: var(--moved); color: #0b1a33; }
     .emp.moved .emp-sub { color: var(--moved); }
@@ -118,21 +118,24 @@
     .emp.shake { animation: shake .3s; }
     @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
-    /* Summary lists */
+    /* Time sheet */
     summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
     summary::-webkit-details-marker { display: none; }
     summary::after { content: "▾"; color: var(--muted); transition: transform .15s; }
     details[open] summary::after { transform: rotate(180deg); }
     details[open] summary { margin-bottom: 10px; }
     summary .section-label { margin: 0; }
-    .group + .group { margin-top: 14px; }
-    .group-title { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; margin: 0 0 8px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; }
-    .count { color: var(--muted); font-weight: 600; }
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
-    .chips li { background: var(--surface-2); border-radius: 99px; padding: 4px 10px; font-size: .85rem; }
-    .chips li b { color: var(--moved); font-weight: 700; margin-left: 4px; }
-    .chips .empty { background: transparent; color: var(--muted); font-style: italic; padding-left: 0; }
+    .sheet-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; font-variant-numeric: tabular-nums; }
+    th { text-align: left; font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 6px 6px; }
+    td { padding: 7px 6px; border-top: 1px solid var(--border); white-space: nowrap; }
+    th:last-child, td:last-child { text-align: right; }
+    td.muted { color: var(--muted); }
+    td .on { color: var(--good); font-weight: 700; }
+    td .cut { color: var(--cut); }
+    td .moved { color: var(--moved); }
+    tfoot td { font-weight: 800; }
+    .not-working { color: var(--muted); font-size: .8rem; margin: 10px 0 0; }
 
     /* Options sheet */
     dialog {
@@ -198,7 +201,7 @@
   <section class="card">
     <div class="roster-head">
       <p class="section-label">Roster</p>
-      <span class="hint">Tap name = working · ⋯ = role &amp; options</span>
+      <span class="hint">Tap name = working · ⋯ = cut, role &amp; options</span>
     </div>
     <div class="roster" id="roster"></div>
   </section>
@@ -206,34 +209,26 @@
   <section class="card">
     <div class="hours-head">
       <p class="section-label">Hours</p>
-      <span class="hours-note" id="hoursNote"></span>
-    </div>
-    <div class="shift-times">
-      <div class="time-field"><label for="startTime">Start</label><input type="time" id="startTime" step="300"></div>
-      <div class="time-field"><label for="endTime">End</label><input type="time" id="endTime" step="300"></div>
+      <div class="shift-state" id="shiftState"></div>
     </div>
     <div class="role-hours">
-      <div><div class="k"><i class="role-dot unloader"></i>Unload</div><div class="v" id="h-unloader">0.0</div></div>
-      <div><div class="k"><i class="role-dot sweep"></i>Sweep</div><div class="v" id="h-sweep">0.0</div></div>
-      <div><div class="k"><i class="role-dot belt"></i>Belt</div><div class="v" id="h-belt">0.0</div></div>
-      <div class="total"><div class="k">Total</div><div class="v" id="h-total">0.0</div></div>
+      <div><div class="k"><i class="role-dot unloader"></i>Unload</div><div class="v" id="h-unloader">0.00</div></div>
+      <div><div class="k"><i class="role-dot sweep"></i>Sweep</div><div class="v" id="h-sweep">0.00</div></div>
+      <div><div class="k"><i class="role-dot belt"></i>Belt</div><div class="v" id="h-belt">0.00</div></div>
+      <div class="total"><div class="k">Total</div><div class="v" id="h-total">0.00</div></div>
     </div>
   </section>
 
   <details class="card">
-    <summary><span class="section-label">Summary</span></summary>
-    <div class="group">
-      <p class="group-title"><span class="dot" style="background:var(--good)"></span>Working <span class="count" id="cWorking">0</span></p>
-      <ul class="chips" id="listWorking"></ul>
+    <summary><span class="section-label">Time sheet</span></summary>
+    <div class="sheet-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Role</th><th>In</th><th>Out</th><th>Hrs</th></tr></thead>
+        <tbody id="tsBody"></tbody>
+        <tfoot><tr><td colspan="4">Total</td><td id="tsTotal">0.00</td></tr></tfoot>
+      </table>
     </div>
-    <div class="group">
-      <p class="group-title"><span class="dot" style="background:var(--moved)"></span>Moved to another line <span class="count" id="cMoved">0</span></p>
-      <ul class="chips" id="listMoved"></ul>
-    </div>
-    <div class="group">
-      <p class="group-title"><span class="dot" style="background:var(--short)"></span>Absent / Unaccounted <span class="count" id="cAbsent">0</span></p>
-      <ul class="chips" id="listAbsent"></ul>
-    </div>
+    <p class="not-working" id="notWorking"></p>
   </details>
 </div>
 
@@ -258,7 +253,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.3.0";
+  var VERSION = "2.4.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   var PLANS = {
@@ -268,9 +263,9 @@
   };
   // Belt tender is tracked and timed but sits outside the DOP headcount.
   var ROLES = [
-    { key: "unloader", label: "Unloaders", one: "Unloader" },
-    { key: "sweep", label: "Sweeps", one: "Sweep" },
-    { key: "belt", label: "Belt tender", one: "Belt tender" }
+    { key: "unloader", one: "Unloader" },
+    { key: "sweep", one: "Sweep" },
+    { key: "belt", one: "Belt tender" }
   ];
   var HOME = "PS9";
   var OTHER_LINES = ["PS1", "PS2", "PS3", "PS4", "PS5", "PS6", "PS7", "PS8", "PS10", "PS11", "PS12"];
@@ -278,32 +273,39 @@
   var LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24" fill="currentColor" aria-label="Locked"><path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V7Z"/></svg>';
 
   // The shift runs past midnight, so anything before noon belongs to the previous
-  // day's shift. That keeps the board, start times, and hours intact at 12 AM.
+  // day's shift. That keeps the board and hours intact at 00:00.
   var ROLLOVER_HOUR = 12;
   var shiftDay = new Date();
   if (shiftDay.getHours() < ROLLOVER_HOUR) shiftDay.setDate(shiftDay.getDate() - 1);
   shiftDay.setHours(0, 0, 0, 0);
   var today = shiftDay.toDateString();
 
-  // Fridays start at 7:30 PM; every other night starts at 8:00 PM.
+  // Fridays start at 19:30; every other night starts at 20:00.
   function defaultStart(day) {
     return day.getDay() === 5 ? "19:30" : "20:00";
   }
 
-  // Per-employee state: { present, at, locked, moved: null | "PS5", role: "auto" | role key }.
-  // "at" is when they were marked working, used to pick automatic sweeps. Saved for the
-  // current shift only, so a refresh keeps the board and the next shift starts clean.
+  // Per-employee state:
+  //   present  on the PS9 board this shift
+  //   segs     clock segments [{ in, out }] in ms; in === null means "from shift start",
+  //            out === null means still on the clock. Cut closes the last one; back on
+  //            clock opens a new one.
+  //   at       when they were marked working, used to pick automatic sweeps
+  //   role     "auto" or a role key; lastRole remembers the role held when cut or moved
+  //   locked, moved (null | "PS5")
+  // Saved for the current shift only, so a refresh keeps the board and the next shift
+  // starts clean.
   var state = load();
   var openName = null;
 
   function blankPerson() {
-    return { present: false, at: 0, locked: false, moved: null, role: "auto" };
+    return { present: false, segs: [], at: 0, locked: false, moved: null, role: "auto", lastRole: null };
   }
 
   function blank() {
     var people = {};
     STAFF.forEach(function (n) { people[n] = blankPerson(); });
-    return { date: today, plan: "7-2", start: defaultStart(shiftDay), end: "", people: people };
+    return { date: today, plan: "7-2", started: null, people: people };
   }
 
   function load() {
@@ -312,12 +314,13 @@
       var saved = JSON.parse(localStorage.getItem(STORE_KEY));
       if (saved && saved.date === today) {
         if (PLANS[saved.plan]) s.plan = saved.plan;
-        // 2.2.0 kept times per role; carry over the unloader times as the shift times.
-        var t = (saved.times && saved.times.unloader) || saved;
-        if (t.start) s.start = t.start;
-        if (t.end) s.end = t.end;
+        if (saved.started) s.started = saved.started;
         STAFF.forEach(function (n) {
-          if (saved.people && saved.people[n]) s.people[n] = Object.assign(blankPerson(), saved.people[n]);
+          var p = saved.people && saved.people[n];
+          if (!p) return;
+          s.people[n] = Object.assign(blankPerson(), p);
+          // Before 2.4.0 there were no clock segments; working meant on since shift start.
+          if (!p.segs && p.present && !p.moved) s.people[n].segs = [{ in: null, out: null }];
         });
       }
     } catch (e) {}
@@ -328,12 +331,51 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
   }
 
-  // Effective role for everyone working on PS9. Explicit roles win; open sweep slots go
+  // "HH:MM" on the shift day. A time before noon is after midnight, so it falls on
+  // the next calendar day.
+  function shiftTime(hhmm) {
+    var parts = hhmm.split(':');
+    var d = new Date(shiftDay);
+    d.setHours(+parts[0], +parts[1], 0, 0);
+    if (+parts[0] < ROLLOVER_HOUR) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  function shiftStart() {
+    return state.started || shiftTime(defaultStart(shiftDay)).getTime();
+  }
+
+  // All time math is done in whole minutes (seconds dropped), so 20:00 to 20:30 is
+  // exactly 30 minutes and two people over it are exactly 60.
+  function minuteOf(ms) { return Math.floor(ms / 60000); }
+  function hrs(mins) { return (mins / 60).toFixed(2); }
+  function clock(ms) {
+    var d = new Date(ms);
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  function lastSeg(p) { return p.segs[p.segs.length - 1]; }
+  function onClock(p) { return p.present && !p.moved && p.segs.length > 0 && lastSeg(p).out === null; }
+  function isCut(p) { return p.present && !p.moved && p.segs.length > 0 && lastSeg(p).out !== null; }
+
+  function minutesFor(p, now) {
+    var start = minuteOf(shiftStart());
+    var end = minuteOf(now);
+    var total = 0;
+    p.segs.forEach(function (seg) {
+      var a = Math.max(start, seg.in === null ? start : minuteOf(seg.in));
+      var b = seg.out === null ? end : minuteOf(seg.out);
+      total += Math.max(0, b - a);
+    });
+    return total;
+  }
+
+  // Effective role for everyone on the clock. Explicit roles win; open sweep slots go
   // to "auto" people, latest to check in first, and the rest of "auto" are unloaders.
   function assignRoles() {
     var plan = PLANS[state.plan];
     var eff = {}, autoSweep = {};
-    var working = STAFF.filter(function (n) { var p = state.people[n]; return p.present && !p.moved; });
+    var working = STAFF.filter(function (n) { return onClock(state.people[n]); });
     working.forEach(function (n) {
       var r = state.people[n].role;
       eff[n] = r === "auto" ? "unloader" : r;
@@ -347,52 +389,11 @@
     return { eff: eff, autoSweep: autoSweep };
   }
 
-  function roleCounts(eff) {
-    var c = { unloader: 0, sweep: 0, belt: 0 };
-    Object.keys(eff).forEach(function (n) { c[eff[n]]++; });
-    return c;
-  }
-
-  // "HH:MM" on the shift day. A time before noon is after midnight, so it falls on
-  // the next calendar day (an 8 PM start with a 2 AM end is 6 hours).
-  function shiftTime(hhmm) {
-    var parts = hhmm.split(':');
-    var d = new Date(shiftDay);
-    d.setHours(+parts[0], +parts[1], 0, 0);
-    if (+parts[0] < ROLLOVER_HOUR) d.setDate(d.getDate() + 1);
-    return d;
-  }
-
-  function fmtDuration(mins) {
-    return Math.floor(mins / 60) + ':' + ('0' + mins % 60).slice(-2);
-  }
-
-  // Everyone shares the shift start/end; each role's hours are its headcount x that time.
-  function renderHours() {
-    var counts = roleCounts(assignRoles().eff);
-    var now = new Date();
-    var start = shiftTime(state.start || defaultStart(shiftDay));
-    var end = state.end ? shiftTime(state.end) : now;
-    var warn = state.end && end < start;
-    var mins = Math.max(0, Math.floor((end - start) / 60000));
-    var total = 0;
-    ROLES.forEach(function (r) {
-      var labor = mins / 60 * counts[r.key];
-      total += labor;
-      document.getElementById('h-' + r.key).textContent = labor.toFixed(1);
-    });
-    document.getElementById('h-total').textContent = total.toFixed(1);
-
-    var note = document.getElementById('hoursNote');
-    note.className = 'hours-note' + (warn ? ' warn' : '');
-    note.textContent = warn ? 'End is before start'
-      : !state.end && now < start ? 'Not started'
-      : fmtDuration(mins) + ' per person' + (state.end ? '' : ' · live');
-  }
-
-  function requiredFor(key) {
-    var p = PLANS[key];
-    return p ? p.unloaders + p.sweeps : 0;
+  // The role someone's hours count under: their live role while on the clock, otherwise
+  // the role they held when cut or moved.
+  function hoursRole(name, eff) {
+    var p = state.people[name];
+    return eff[name] || p.lastRole || (p.role === "auto" ? "unloader" : p.role);
   }
 
   function roleLabel(key) {
@@ -400,9 +401,41 @@
     return "Auto";
   }
 
+  function requiredFor(key) {
+    var p = PLANS[key];
+    return p ? p.unloaders + p.sweeps : 0;
+  }
+
+  // Clock actions
+  function markWorking(p) {
+    p.present = true;
+    p.at = Date.now();
+    p.segs = [{ in: null, out: null }];
+    p.lastRole = null;
+  }
+  function removeFromShift(p) {
+    p.present = false;
+    p.at = 0;
+    p.segs = [];
+    p.lastRole = null;
+  }
+  function cut(name) {
+    var p = state.people[name];
+    if (!onClock(p)) return;
+    p.lastRole = assignRoles().eff[name];
+    lastSeg(p).out = Date.now();
+  }
+  function backOnClock(p) {
+    p.segs.push({ in: Date.now(), out: null });
+    p.lastRole = null;
+  }
+
   function statusText(p) {
-    if (p.moved) return "Moved to " + p.moved;
-    return p.present ? "Working" : "Not marked";
+    var now = Date.now();
+    if (p.moved) return "Moved to " + p.moved + (p.segs.length ? ' · ' + hrs(minutesFor(p, now)) + ' hrs on PS9' : '');
+    if (isCut(p)) return "Cut at " + clock(lastSeg(p).out) + " · " + hrs(minutesFor(p, now)) + " hrs";
+    if (onClock(p)) return "On the clock · " + hrs(minutesFor(p, now)) + " hrs";
+    return "Not working";
   }
 
   var toastTimer;
@@ -412,23 +445,6 @@
     t.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
-  }
-
-  function chips(listEl, items) {
-    listEl.innerHTML = '';
-    if (!items.length) {
-      var li = document.createElement('li');
-      li.className = 'empty';
-      li.textContent = 'None';
-      listEl.appendChild(li);
-      return;
-    }
-    items.forEach(function (it) {
-      var li = document.createElement('li');
-      li.textContent = it.name;
-      if (it.tag) { var b = document.createElement('b'); b.textContent = it.tag; li.appendChild(b); }
-      listEl.appendChild(li);
-    });
   }
 
   function renderPlans() {
@@ -445,34 +461,30 @@
     });
   }
 
-  function setPresent(p, on) {
-    p.present = on;
-    p.at = on ? Date.now() : 0;
-  }
-
   function renderRoster(roles) {
     var el = document.getElementById('roster');
     el.innerHTML = '';
     STAFF.forEach(function (name) {
       var p = state.people[name];
       var tile = document.createElement('div');
-      tile.className = 'emp' + (p.moved ? ' moved' : p.present ? ' present' : '') + (p.locked ? ' locked' : '');
+      tile.className = 'emp' + (p.moved ? ' moved' : isCut(p) ? ' cut' : onClock(p) ? ' present' : '') + (p.locked ? ' locked' : '');
 
       var nameBtn = document.createElement('button');
       nameBtn.type = 'button';
       nameBtn.className = 'emp-name';
-      nameBtn.setAttribute('aria-pressed', p.present ? 'true' : 'false');
+      nameBtn.setAttribute('aria-pressed', onClock(p) ? 'true' : 'false');
       nameBtn.innerHTML = '<span class="avatar"></span><span class="emp-label"></span>' + (p.locked ? LOCK_SVG : '');
       nameBtn.querySelector('.avatar').textContent = name.charAt(0);
       var label = nameBtn.querySelector('.emp-label');
       label.textContent = name;
 
-      // Sub-line: the line they moved to, else their role when it is not a plain unloader
+      // Sub-line: moved line, cut time, else their role when it is not a plain unloader
       // (the green tile already says working), else "Working".
       var role = roles.eff[name] || (p.role !== "auto" ? p.role : null);
       var subHtml = p.moved ? '→ ' + p.moved
+        : isCut(p) ? 'Cut ' + clock(lastSeg(p).out)
         : role && role !== 'unloader' ? '<span class="r-' + role + (roles.autoSweep[name] ? ' auto' : '') + '">' + roleLabel(role) + '</span>'
-        : p.present ? 'Working' : '';
+        : onClock(p) ? 'Working' : '';
       if (subHtml) {
         var sub = document.createElement('span');
         sub.className = 'emp-sub';
@@ -481,12 +493,12 @@
       }
 
       nameBtn.addEventListener('click', function () {
-        if (p.locked || p.moved) {
+        if (p.locked || p.moved || isCut(p)) {
           tile.classList.remove('shake'); void tile.offsetWidth; tile.classList.add('shake');
-          toast(name + (p.moved ? ' is on ' + p.moved : ' is locked') + ' — use ⋯ options');
+          toast(name + (p.moved ? ' is on ' + p.moved : isCut(p) ? ' is cut' : ' is locked') + ' — use ⋯ options');
           return;
         }
-        setPresent(p, !p.present);
+        if (onClock(p)) removeFromShift(p); else markWorking(p);
         save(); render();
       });
 
@@ -503,19 +515,89 @@
     });
   }
 
+  function renderShiftState() {
+    var el = document.getElementById('shiftState');
+    var start = shiftStart();
+    var now = Date.now();
+    el.innerHTML = '';
+    var text = document.createElement('span');
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pill-btn';
+    if (now < start) {
+      text.innerHTML = 'Starts <b>' + clock(start) + '</b>';
+      btn.textContent = 'Start now';
+      btn.addEventListener('click', function () {
+        state.started = minuteOf(Date.now()) * 60000;
+        save(); render();
+        toast('Shift started at ' + clock(state.started));
+      });
+    } else {
+      text.innerHTML = 'Started <b>' + clock(start) + '</b>';
+      if (!state.started) btn = null;
+      else {
+        // A manual start can be undone back to the scheduled time.
+        btn.className = 'pill-btn ghost';
+        btn.textContent = 'Undo';
+        btn.addEventListener('click', function () {
+          state.started = null;
+          save(); render();
+        });
+      }
+    }
+    el.appendChild(text);
+    if (btn) el.appendChild(btn);
+  }
+
+  function renderHours(roles) {
+    var now = Date.now();
+    var byRole = { unloader: 0, sweep: 0, belt: 0 };
+    var rows = [], total = 0, idle = [];
+    STAFF.forEach(function (n) {
+      var p = state.people[n];
+      if (!p.segs.length) { if (!p.moved) idle.push(n); return; }
+      var mins = minutesFor(p, now);
+      var r = hoursRole(n, roles.eff);
+      byRole[r] += mins;
+      total += mins;
+      rows.push({ name: n, p: p, role: r, mins: mins });
+    });
+
+    ROLES.forEach(function (r) { document.getElementById('h-' + r.key).textContent = hrs(byRole[r.key]); });
+    document.getElementById('h-total').textContent = hrs(total);
+
+    var body = document.getElementById('tsBody');
+    body.innerHTML = '';
+    var start = shiftStart();
+    rows.forEach(function (row) {
+      var p = row.p;
+      var first = p.segs[0].in === null ? start : Math.max(start, p.segs[0].in);
+      var out = onClock(p) ? '<span class="on">on</span>'
+        : p.moved ? '<span class="moved">' + clock(lastSeg(p).out) + ' ' + p.moved + '</span>'
+        : '<span class="cut">' + clock(lastSeg(p).out) + '</span>';
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td></td><td class="muted"></td><td>' + clock(first) + '</td><td>' + out + '</td><td>' + hrs(row.mins) + '</td>';
+      tr.children[0].textContent = row.name + (p.segs.length > 1 ? ' *' : '');
+      tr.children[1].textContent = roleLabel(row.role);
+      body.appendChild(tr);
+    });
+    if (!rows.length) body.innerHTML = '<tr><td colspan="5" class="muted">No one on the clock yet</td></tr>';
+    document.getElementById('tsTotal').textContent = hrs(total);
+    var multi = rows.some(function (r) { return r.p.segs.length > 1; });
+    document.getElementById('notWorking').textContent =
+      (multi ? '* Cut and put back on the clock; hours count only time on. ' : '') +
+      (idle.length ? 'Not working: ' + idle.join(', ') : '');
+
+    renderShiftState();
+  }
+
   function render() {
     var plan = PLANS[state.plan];
     var dop = requiredFor(state.plan);
     var roles = assignRoles();
-    var counts = roleCounts(roles.eff);
-    var working = [], moved = [], absent = [];
-    STAFF.forEach(function (n) {
-      var p = state.people[n];
-      if (p.moved) moved.push({ name: n, tag: p.moved });
-      else if (p.present) working.push({ name: n });
-      else absent.push({ name: n });
-    });
-    // Only unloaders and sweeps count toward the DOP.
+    var counts = { unloader: 0, sweep: 0, belt: 0 };
+    Object.keys(roles.eff).forEach(function (n) { counts[roles.eff[n]]++; });
+    // Only unloaders and sweeps on the clock count toward the DOP.
     var count = counts.unloader + counts.sweep;
     var diff = count - dop;
     var down = Math.max(0, -diff);
@@ -536,16 +618,9 @@
       '<span><i class="role-dot belt"></i>Belt <b>' + counts.belt + '</b></span>' +
       '<span class="status">' + (diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : down + ' needed') + '</span>';
 
-    document.getElementById('cWorking').textContent = working.length;
-    document.getElementById('cMoved').textContent = moved.length;
-    document.getElementById('cAbsent').textContent = absent.length;
-    chips(document.getElementById('listWorking'), working);
-    chips(document.getElementById('listMoved'), moved);
-    chips(document.getElementById('listAbsent'), absent);
-
     renderPlans();
     renderRoster(roles);
-    renderHours();
+    renderHours(roles);
     if (openName) renderSheet();
   }
 
@@ -580,23 +655,40 @@
 
     var acts = document.getElementById('sActions');
     acts.innerHTML = '';
-    if (!p.moved) {
-      acts.appendChild(action(p.present ? '✕' : '✓', p.present ? 'Mark not working' : 'Mark working', function () {
-        setPresent(p, !p.present); save(); render();
+    if (onClock(p)) {
+      acts.appendChild(action('✂', 'Cut (stop the clock)', function () {
+        cut(name); save(); render();
+        toast(name + ' cut at ' + clock(lastSeg(p).out));
+      }));
+    } else if (isCut(p)) {
+      acts.appendChild(action('▶', 'Put back on the clock', function () {
+        backOnClock(p); save(); render();
+        toast(name + ' back on at ' + clock(lastSeg(p).in));
+      }));
+    } else if (!p.moved && !p.present) {
+      acts.appendChild(action('✓', 'Mark working', function () {
+        markWorking(p); save(); render();
       }));
     }
-    acts.appendChild(action(p.locked ? '🔓' : '🔒', p.locked ? 'Unlock' : 'Lock (tap on name disabled)', function () {
-      p.locked = !p.locked; save(); render();
-    }));
     if (p.moved) {
-      acts.appendChild(action('↩', 'Return to ' + HOME, function () {
-        p.moved = null; save(); render();
+      acts.appendChild(action('↩', 'Return to ' + HOME + (p.present ? ' (back on the clock)' : ''), function () {
+        p.moved = null;
+        if (p.present) backOnClock(p);
+        save(); render();
       }));
     }
     var linesWrap = document.getElementById('sLines');
     acts.appendChild(action('⇄', p.moved ? 'Change line' : 'Move to another PS line', function () {
       linesWrap.hidden = !linesWrap.hidden;
     }));
+    acts.appendChild(action(p.locked ? '🔓' : '🔒', p.locked ? 'Unlock' : 'Lock (tap on name disabled)', function () {
+      p.locked = !p.locked; save(); render();
+    }));
+    if (p.present && !p.moved) {
+      acts.appendChild(action('✕', 'Remove from shift (clears hours)', function () {
+        removeFromShift(p); save(); render();
+      }));
+    }
 
     var linesEl = document.getElementById('lines');
     linesEl.innerHTML = '';
@@ -606,7 +698,9 @@
       b.textContent = line;
       b.setAttribute('aria-current', p.moved === line ? 'true' : 'false');
       b.addEventListener('click', function () {
-        p.moved = line; setPresent(p, false);
+        // Moving stops their PS9 clock; the hours so far stay on the time sheet.
+        cut(name);
+        p.moved = line;
         linesWrap.hidden = true;
         save(); render();
         toast(name + ' moved to ' + line);
@@ -629,20 +723,7 @@
   document.getElementById('date').textContent =
     shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;
 
-  var startEl = document.getElementById('startTime');
-  var endEl = document.getElementById('endTime');
-  startEl.value = state.start;
-  endEl.value = state.end;
-  startEl.addEventListener('change', function () {
-    state.start = startEl.value || defaultStart(shiftDay);
-    startEl.value = state.start;
-    save(); renderHours();
-  });
-  endEl.addEventListener('change', function () {
-    state.end = endEl.value;
-    save(); renderHours();
-  });
-  setInterval(renderHours, 30000);
+  setInterval(render, 30000);
   render();
 </script>
 </body>

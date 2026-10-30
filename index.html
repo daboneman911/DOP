@@ -35,29 +35,25 @@
     }
     .section-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 
-    /* Role timers */
-    .timer { background: var(--surface-2); border-radius: 12px; padding: 12px; }
-    .timer + .timer { margin-top: 10px; }
-    .timer-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-    .timer-name { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-    .timer-count { display: block; color: var(--muted); font-size: .75rem; font-weight: 600; margin: 2px 0 0 16px; }
-    .timer-hrs { text-align: right; font-variant-numeric: tabular-nums; }
-    .timer-hrs b { font-size: 1.4rem; font-weight: 800; line-height: 1.1; }
-    .timer-hrs small { color: var(--muted); font-weight: 600; margin-left: 2px; }
-    .timer-hrs span { display: block; color: var(--muted); font-size: .72rem; }
-    .timer-hrs span.warn { color: var(--short); }
-    .timer-times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    /* Hours */
+    .hours-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .hours-note { color: var(--muted); font-size: .75rem; font-weight: 600; }
+    .hours-note.warn { color: var(--short); }
+    .shift-times { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .time-field { min-width: 0; }
     .time-field label { display: block; font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
     /* Time inputs carry a large built-in width on iOS; reset it so they fit their column. */
     .time-field input {
-      display: block; width: 100%; max-width: 100%; min-width: 0; height: 42px; margin: 0; padding: 0 10px;
+      display: block; width: 100%; max-width: 100%; min-width: 0; height: 40px; margin: 0; padding: 0 10px;
       -webkit-appearance: none; appearance: none; background: var(--bg); border: 1px solid var(--border);
       border-radius: 8px; color: var(--text); font: inherit; font-weight: 700; color-scheme: dark;
     }
     .time-field input::-webkit-date-and-time-value { text-align: left; }
-    .total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; padding: 0 2px; font-weight: 700; }
-    .total b { font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+    .role-hours { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; text-align: center; }
+    .role-hours div { background: var(--surface-2); border-radius: 10px; padding: 8px 4px; min-width: 0; }
+    .role-hours .k { display: flex; justify-content: center; align-items: center; gap: 5px; font-size: .68rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+    .role-hours .v { font-size: 1.05rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .role-hours .total { background: rgba(99, 102, 241, .18); }
     .role-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
     .role-dot.unloader { background: var(--role-unloader); }
     .role-dot.sweep { background: var(--role-sweep); }
@@ -72,18 +68,18 @@
     .segmented button[aria-checked="true"] { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, .4); }
 
     /* Tally */
-    .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 14px; }
-    .stat { background: var(--surface-2); border-radius: 12px; padding: 12px 6px; }
-    .stat .k { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-    .stat .v { font-size: 2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; margin-top: 10px; }
+    .stat { background: var(--surface-2); border-radius: 12px; padding: 8px 6px; }
+    .stat .k { font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .stat .v { font-size: 1.5rem; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
     .v.is-good { color: var(--good); } .v.is-short { color: var(--short); }
-    .progress { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 14px; }
+    .progress { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 10px; }
     .progress div { height: 100%; width: 0; background: var(--short); border-radius: 99px; transition: width .25s, background .25s; }
     .progress div.is-good { background: var(--good); } .progress div.is-over { background: var(--over); }
-    .split { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: .82rem; font-weight: 600; color: var(--muted); }
-    .split span { display: inline-flex; align-items: center; gap: 6px; }
+    .split { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: .78rem; font-weight: 600; color: var(--muted); }
+    .split span { display: inline-flex; align-items: center; gap: 5px; }
     .split b { color: var(--text); font-variant-numeric: tabular-nums; }
-    .status { text-align: center; margin-top: 8px; font-weight: 600; font-size: .9rem; color: var(--muted); min-height: 1.2em; }
+    .split .status { color: var(--text); }
 
     /* Roster */
     .roster-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
@@ -95,7 +91,7 @@
     }
     .emp-name {
       flex: 1; display: flex; align-items: center; gap: 10px; border: 0; background: transparent;
-      padding: 12px; text-align: left; cursor: pointer; font-weight: 600; min-width: 0;
+      padding: 10px; text-align: left; cursor: pointer; font-weight: 600; min-width: 0;
     }
     .emp-name:active { transform: scale(.98); }
     .avatar {
@@ -105,8 +101,9 @@
     .emp-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .emp-sub { display: block; font-size: .7rem; font-weight: 600; color: var(--muted); }
     .emp-sub .r-sweep { color: var(--role-sweep); } .emp-sub .r-belt { color: var(--role-belt); }
+    .emp-sub .auto { font-style: italic; opacity: .8; }
     .emp-opts {
-      border: 0; border-left: 1px solid var(--border); background: transparent; width: 40px; flex: none;
+      border: 0; border-left: 1px solid var(--border); background: transparent; width: 36px; flex: none;
       cursor: pointer; color: var(--muted); font-size: 1.2rem; line-height: 1;
     }
     .emp-opts:hover { color: var(--text); background: rgba(255, 255, 255, .04); }
@@ -122,6 +119,12 @@
     @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
     /* Summary lists */
+    summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "▾"; color: var(--muted); transition: transform .15s; }
+    details[open] summary::after { transform: rotate(180deg); }
+    details[open] summary { margin-bottom: 10px; }
+    summary .section-label { margin: 0; }
     .group + .group { margin-top: 14px; }
     .group-title { display: flex; align-items: center; gap: 8px; font-size: .8rem; font-weight: 700; margin: 0 0 8px; }
     .dot { width: 8px; height: 8px; border-radius: 50%; }
@@ -182,13 +185,6 @@
   </header>
 
   <section class="card">
-    <p class="section-label">Hours by role</p>
-    <div id="timers"></div>
-    <div class="total"><span>Total labor hours</span><b id="vTotal">0.00</b></div>
-  </section>
-
-  <section class="card">
-    <p class="section-label">Daily Operating Plan</p>
     <div class="segmented" role="radiogroup" aria-label="Daily Operating Plan" id="plans"></div>
     <div class="tally">
       <div class="stat"><div class="k">DOP</div><div class="v" id="vDop">9</div></div>
@@ -197,18 +193,35 @@
     </div>
     <div class="progress"><div id="bar"></div></div>
     <div class="split" id="split"></div>
-    <div class="status" id="status"></div>
   </section>
 
   <section class="card">
     <div class="roster-head">
       <p class="section-label">Roster</p>
-      <span class="hint">Tap a name to mark working · ⋯ for role &amp; options</span>
+      <span class="hint">Tap name = working · ⋯ = role &amp; options</span>
     </div>
     <div class="roster" id="roster"></div>
   </section>
 
   <section class="card">
+    <div class="hours-head">
+      <p class="section-label">Hours</p>
+      <span class="hours-note" id="hoursNote"></span>
+    </div>
+    <div class="shift-times">
+      <div class="time-field"><label for="startTime">Start</label><input type="time" id="startTime" step="300"></div>
+      <div class="time-field"><label for="endTime">End</label><input type="time" id="endTime" step="300"></div>
+    </div>
+    <div class="role-hours">
+      <div><div class="k"><i class="role-dot unloader"></i>Unload</div><div class="v" id="h-unloader">0.0</div></div>
+      <div><div class="k"><i class="role-dot sweep"></i>Sweep</div><div class="v" id="h-sweep">0.0</div></div>
+      <div><div class="k"><i class="role-dot belt"></i>Belt</div><div class="v" id="h-belt">0.0</div></div>
+      <div class="total"><div class="k">Total</div><div class="v" id="h-total">0.0</div></div>
+    </div>
+  </section>
+
+  <details class="card">
+    <summary><span class="section-label">Summary</span></summary>
     <div class="group">
       <p class="group-title"><span class="dot" style="background:var(--good)"></span>Working <span class="count" id="cWorking">0</span></p>
       <ul class="chips" id="listWorking"></ul>
@@ -221,7 +234,7 @@
       <p class="group-title"><span class="dot" style="background:var(--short)"></span>Absent / Unaccounted <span class="count" id="cAbsent">0</span></p>
       <ul class="chips" id="listAbsent"></ul>
     </div>
-  </section>
+  </details>
 </div>
 
 <dialog id="sheet">
@@ -245,7 +258,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.2.0";
+  var VERSION = "2.3.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   var PLANS = {
@@ -288,10 +301,9 @@
   }
 
   function blank() {
-    var people = {}, times = {};
+    var people = {};
     STAFF.forEach(function (n) { people[n] = blankPerson(); });
-    ROLES.forEach(function (r) { times[r.key] = { start: defaultStart(shiftDay), end: "" }; });
-    return { date: today, plan: "7-2", times: times, people: people };
+    return { date: today, plan: "7-2", start: defaultStart(shiftDay), end: "", people: people };
   }
 
   function load() {
@@ -300,12 +312,10 @@
       var saved = JSON.parse(localStorage.getItem(STORE_KEY));
       if (saved && saved.date === today) {
         if (PLANS[saved.plan]) s.plan = saved.plan;
-        ROLES.forEach(function (r) {
-          // Earlier versions kept one start/end for the whole shift.
-          var t = (saved.times && saved.times[r.key]) || { start: saved.start, end: saved.end };
-          if (t.start) s.times[r.key].start = t.start;
-          if (t.end) s.times[r.key].end = t.end;
-        });
+        // 2.2.0 kept times per role; carry over the unloader times as the shift times.
+        var t = (saved.times && saved.times.unloader) || saved;
+        if (t.start) s.start = t.start;
+        if (t.end) s.end = t.end;
         STAFF.forEach(function (n) {
           if (saved.people && saved.people[n]) s.people[n] = Object.assign(blankPerson(), saved.people[n]);
         });
@@ -357,71 +367,27 @@
     return Math.floor(mins / 60) + ':' + ('0' + mins % 60).slice(-2);
   }
 
-  function timeInput(id, label, value, onChange) {
-    var wrap = document.createElement('div');
-    wrap.className = 'time-field';
-    wrap.innerHTML = '<label></label><input type="time" step="300">';
-    var input = wrap.querySelector('input');
-    input.id = id;
-    wrap.querySelector('label').htmlFor = id;
-    wrap.querySelector('label').textContent = label;
-    input.value = value;
-    input.addEventListener('change', function () { onChange(input); });
-    return wrap;
-  }
-
-  // Built once; the hours readouts are refreshed in place by renderHours so typing in a
-  // time field is never interrupted by a rebuild.
-  function buildTimers() {
-    var el = document.getElementById('timers');
-    ROLES.forEach(function (r) {
-      var t = state.times[r.key];
-      var box = document.createElement('div');
-      box.className = 'timer';
-      box.innerHTML =
-        '<div class="timer-head">' +
-          '<div><div class="timer-name"><span class="role-dot ' + r.key + '"></span>' + r.label + '</div>' +
-          '<span class="timer-count" id="tc-' + r.key + '"></span></div>' +
-          '<div class="timer-hrs"><b id="th-' + r.key + '">0.00</b><small>hrs</small><span id="ts-' + r.key + '"></span></div>' +
-        '</div>' +
-        '<div class="timer-times"></div>';
-      var times = box.querySelector('.timer-times');
-      times.appendChild(timeInput('start-' + r.key, 'Start', t.start, function (input) {
-        t.start = input.value || defaultStart(shiftDay);
-        input.value = t.start;
-        save(); renderHours();
-      }));
-      times.appendChild(timeInput('end-' + r.key, 'End', t.end, function (input) {
-        t.end = input.value;
-        save(); renderHours();
-      }));
-      el.appendChild(box);
-    });
-  }
-
+  // Everyone shares the shift start/end; each role's hours are its headcount x that time.
   function renderHours() {
     var counts = roleCounts(assignRoles().eff);
     var now = new Date();
+    var start = shiftTime(state.start || defaultStart(shiftDay));
+    var end = state.end ? shiftTime(state.end) : now;
+    var warn = state.end && end < start;
+    var mins = Math.max(0, Math.floor((end - start) / 60000));
     var total = 0;
     ROLES.forEach(function (r) {
-      var t = state.times[r.key];
-      var start = shiftTime(t.start || defaultStart(shiftDay));
-      var end = t.end ? shiftTime(t.end) : now;
-      var mins = Math.max(0, Math.floor((end - start) / 60000));
-      var n = counts[r.key];
-      var labor = mins / 60 * n;
+      var labor = mins / 60 * counts[r.key];
       total += labor;
-
-      document.getElementById('tc-' + r.key).textContent = n + ' working';
-      document.getElementById('th-' + r.key).textContent = labor.toFixed(2);
-      var sub = document.getElementById('ts-' + r.key);
-      var warn = t.end && end < start;
-      sub.className = warn ? 'warn' : '';
-      sub.textContent = warn ? 'End is before start'
-        : !t.end && now < start ? 'Not started'
-        : fmtDuration(mins) + ' each' + (t.end ? '' : ' · running');
+      document.getElementById('h-' + r.key).textContent = labor.toFixed(1);
     });
-    document.getElementById('vTotal').textContent = total.toFixed(2);
+    document.getElementById('h-total').textContent = total.toFixed(1);
+
+    var note = document.getElementById('hoursNote');
+    note.className = 'hours-note' + (warn ? ' warn' : '');
+    note.textContent = warn ? 'End is before start'
+      : !state.end && now < start ? 'Not started'
+      : fmtDuration(mins) + ' per person' + (state.end ? '' : ' · live');
   }
 
   function requiredFor(key) {
@@ -501,18 +467,16 @@
       var label = nameBtn.querySelector('.emp-label');
       label.textContent = name;
 
-      // Sub-line: where they are, and their role when it is not a plain unloader.
+      // Sub-line: the line they moved to, else their role when it is not a plain unloader
+      // (the green tile already says working), else "Working".
       var role = roles.eff[name] || (p.role !== "auto" ? p.role : null);
-      var parts = [];
-      if (p.moved) parts.push('→ ' + p.moved);
-      else if (p.present) parts.push('Working');
-      if (!p.moved && role && role !== 'unloader') {
-        parts.push('<span class="r-' + role + '">' + roleLabel(role) + (roles.autoSweep[name] ? ' (auto)' : '') + '</span>');
-      }
-      if (parts.length) {
+      var subHtml = p.moved ? '→ ' + p.moved
+        : role && role !== 'unloader' ? '<span class="r-' + role + (roles.autoSweep[name] ? ' auto' : '') + '">' + roleLabel(role) + '</span>'
+        : p.present ? 'Working' : '';
+      if (subHtml) {
         var sub = document.createElement('span');
         sub.className = 'emp-sub';
-        sub.innerHTML = parts.join(' · ');
+        sub.innerHTML = subHtml;
         label.appendChild(sub);
       }
 
@@ -569,10 +533,8 @@
     document.getElementById('split').innerHTML =
       '<span><i class="role-dot unloader"></i>Unloaders <b>' + counts.unloader + '/' + plan.unloaders + '</b></span>' +
       '<span><i class="role-dot sweep"></i>Sweeps <b>' + counts.sweep + '/' + plan.sweeps + '</b></span>' +
-      '<span><i class="role-dot belt"></i>Belt tender <b>' + counts.belt + '</b></span>';
-
-    document.getElementById('status').textContent =
-      diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : down + ' needed to make plan';
+      '<span><i class="role-dot belt"></i>Belt <b>' + counts.belt + '</b></span>' +
+      '<span class="status">' + (diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : down + ' needed') + '</span>';
 
     document.getElementById('cWorking').textContent = working.length;
     document.getElementById('cMoved').textContent = moved.length;
@@ -667,7 +629,19 @@
   document.getElementById('date').textContent =
     shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;
 
-  buildTimers();
+  var startEl = document.getElementById('startTime');
+  var endEl = document.getElementById('endTime');
+  startEl.value = state.start;
+  endEl.value = state.end;
+  startEl.addEventListener('change', function () {
+    state.start = startEl.value || defaultStart(shiftDay);
+    startEl.value = state.start;
+    save(); renderHours();
+  });
+  endEl.addEventListener('change', function () {
+    state.end = endEl.value;
+    save(); renderHours();
+  });
   setInterval(renderHours, 30000);
   render();
 </script>

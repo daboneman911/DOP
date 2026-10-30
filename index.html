@@ -36,16 +36,39 @@
     }
     .section-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 
-    /* Hours */
-    .hours-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .hours-head .section-label { margin: 0; }
-    .shift-state { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .78rem; font-weight: 600; }
-    .shift-state b { color: var(--text); font-variant-numeric: tabular-nums; }
+    /* Shift start */
+    .start-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: linear-gradient(135deg, rgba(99, 102, 241, .22), rgba(99, 102, 241, .06)), var(--surface);
+      border-color: rgba(99, 102, 241, .35); }
+    .start-time { display: flex; align-items: center; font-size: 2.4rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+    .start-time select {
+      -webkit-appearance: none; appearance: none; border: 0; background: transparent; color: var(--text);
+      font: inherit; padding: 0 2px; cursor: pointer; border-bottom: 2px dashed rgba(255, 255, 255, .25); border-radius: 0;
+    }
+    .start-time select:focus { outline: none; border-bottom-color: var(--accent); }
+    .start-time select option { font-size: 1rem; background: var(--surface); }
+    .start-time span { padding: 0 2px; color: var(--muted); }
+    .start-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .start-status { color: var(--muted); font-size: .8rem; font-weight: 600; text-align: right; }
+    .start-status b { color: var(--text); font-variant-numeric: tabular-nums; }
+    .start-btns { display: flex; gap: 6px; }
     .pill-btn {
-      border: 0; border-radius: 99px; padding: 6px 12px; background: var(--accent); color: #fff;
+      border: 0; border-radius: 99px; padding: 7px 12px; background: var(--accent); color: #fff;
       font-size: .75rem; font-weight: 700; cursor: pointer;
     }
     .pill-btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+    /* Reset */
+    .reset-btn {
+      display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(251, 113, 133, .35);
+      background: transparent; color: var(--short); font-weight: 700; cursor: pointer; transition: background .15s, color .15s;
+    }
+    .reset-btn.armed { background: var(--short); color: #2a0a10; }
+
+    /* Hours */
+    .hours-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .hours-head .section-label { margin: 0; }
+    .hours-note { color: var(--muted); font-size: .78rem; font-weight: 600; }
     .role-hours { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; }
     .role-hours div { background: var(--surface-2); border-radius: 10px; padding: 8px 4px; min-width: 0; }
     .role-hours .k { display: flex; justify-content: center; align-items: center; gap: 5px; font-size: .68rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
@@ -187,6 +210,19 @@
     <div class="date" id="date"></div>
   </header>
 
+  <section class="card start-card">
+    <div>
+      <p class="section-label">Shift start</p>
+      <div class="start-time">
+        <select id="startH" aria-label="Start hour"></select><span>:</span><select id="startM" aria-label="Start minute"></select>
+      </div>
+    </div>
+    <div class="start-side">
+      <div class="start-status" id="startStatus"></div>
+      <div class="start-btns" id="startBtns"></div>
+    </div>
+  </section>
+
   <section class="card">
     <div class="segmented" role="radiogroup" aria-label="Daily Operating Plan" id="plans"></div>
     <div class="tally">
@@ -209,7 +245,7 @@
   <section class="card">
     <div class="hours-head">
       <p class="section-label">Hours</p>
-      <div class="shift-state" id="shiftState"></div>
+      <span class="hours-note">Decimal hours</span>
     </div>
     <div class="role-hours">
       <div><div class="k"><i class="role-dot unloader"></i>Unload</div><div class="v" id="h-unloader">0.00</div></div>
@@ -230,6 +266,8 @@
     </div>
     <p class="not-working" id="notWorking"></p>
   </details>
+
+  <button class="reset-btn" id="resetBtn" type="button">Reset everything</button>
 </div>
 
 <dialog id="sheet">
@@ -253,7 +291,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.4.0";
+  var VERSION = "2.5.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   var PLANS = {
@@ -515,38 +553,88 @@
     });
   }
 
-  function renderShiftState() {
-    var el = document.getElementById('shiftState');
+  function pillBtn(text, ghost, fn) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pill-btn' + (ghost ? ' ghost' : '');
+    b.textContent = text;
+    b.addEventListener('click', fn);
+    return b;
+  }
+
+  // The start card: the hour/minute pickers show the effective start in 24-hour time.
+  // Picking a time, or Start now, overrides the scheduled start; Scheduled puts it back.
+  function renderStart() {
     var start = shiftStart();
     var now = Date.now();
-    el.innerHTML = '';
-    var text = document.createElement('span');
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'pill-btn';
+    var d = new Date(start);
+    var hEl = document.getElementById('startH');
+    var mEl = document.getElementById('startM');
+    if (document.activeElement !== hEl) hEl.value = ('0' + d.getHours()).slice(-2);
+    if (document.activeElement !== mEl) mEl.value = ('0' + d.getMinutes()).slice(-2);
+
+    var scheduled = defaultStart(shiftDay);
+    document.getElementById('startStatus').innerHTML =
+      now < start
+        ? 'Starts in <b>' + hrs(minuteOf(start) - minuteOf(now)) + '</b> hrs'
+        : 'Running <b>' + hrs(minuteOf(now) - minuteOf(start)) + '</b> hrs';
+
+    var btns = document.getElementById('startBtns');
+    btns.innerHTML = '';
     if (now < start) {
-      text.innerHTML = 'Starts <b>' + clock(start) + '</b>';
-      btn.textContent = 'Start now';
-      btn.addEventListener('click', function () {
+      btns.appendChild(pillBtn('Start now', false, function () {
         state.started = minuteOf(Date.now()) * 60000;
         save(); render();
         toast('Shift started at ' + clock(state.started));
-      });
-    } else {
-      text.innerHTML = 'Started <b>' + clock(start) + '</b>';
-      if (!state.started) btn = null;
-      else {
-        // A manual start can be undone back to the scheduled time.
-        btn.className = 'pill-btn ghost';
-        btn.textContent = 'Undo';
-        btn.addEventListener('click', function () {
-          state.started = null;
-          save(); render();
-        });
-      }
+      }));
     }
-    el.appendChild(text);
-    if (btn) el.appendChild(btn);
+    if (state.started) {
+      btns.appendChild(pillBtn('Scheduled ' + scheduled, true, function () {
+        state.started = null;
+        save(); render();
+      }));
+    }
+  }
+
+  function buildStartPickers() {
+    var hEl = document.getElementById('startH');
+    var mEl = document.getElementById('startM');
+    for (var h = 0; h < 24; h++) hEl.add(new Option(('0' + h).slice(-2)));
+    for (var m = 0; m < 60; m++) mEl.add(new Option(('0' + m).slice(-2)));
+    function onPick() {
+      var t = shiftTime(hEl.value + ':' + mEl.value).getTime();
+      state.started = t === shiftTime(defaultStart(shiftDay)).getTime() ? null : t;
+      save(); render();
+      toast('Shift start set to ' + clock(shiftStart()));
+    }
+    hEl.addEventListener('change', onPick);
+    mEl.addEventListener('change', onPick);
+  }
+
+  // Reset needs a second tap within a few seconds, since the page cannot show a confirm box.
+  function setupReset() {
+    var btn = document.getElementById('resetBtn');
+    var timer = null;
+    function disarm() {
+      clearTimeout(timer); timer = null;
+      btn.classList.remove('armed');
+      btn.textContent = 'Reset everything';
+    }
+    btn.addEventListener('click', function () {
+      if (!timer) {
+        btn.classList.add('armed');
+        btn.textContent = 'Tap again to clear the board and all hours';
+        timer = setTimeout(disarm, 4000);
+        return;
+      }
+      disarm();
+      state = blank();
+      save();
+      if (sheet.open) sheet.close();
+      render();
+      toast('Everything reset');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 
   function renderHours(roles) {
@@ -588,7 +676,7 @@
       (multi ? '* Cut and put back on the clock; hours count only time on. ' : '') +
       (idle.length ? 'Not working: ' + idle.join(', ') : '');
 
-    renderShiftState();
+    renderStart();
   }
 
   function render() {
@@ -723,6 +811,8 @@
   document.getElementById('date').textContent =
     shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;
 
+  buildStartPickers();
+  setupReset();
   setInterval(render, 30000);
   render();
 </script>

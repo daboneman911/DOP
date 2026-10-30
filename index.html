@@ -23,7 +23,7 @@
     .container { width: 100%; max-width: 520px; }
     button { font: inherit; color: inherit; }
 
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    header { text-align: center; margin-bottom: 18px; }
     h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
     h1 span { color: var(--accent); }
     .date { color: var(--muted); font-size: .85rem; margin-top: 2px; }
@@ -41,6 +41,19 @@
       color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
     }
     .segmented button[aria-checked="true"] { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, .4); }
+
+    /* Shift clock */
+    .shift { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: stretch; }
+    .field { background: var(--surface-2); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .field label { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+    .field input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+      font: inherit; font-weight: 700; padding: 6px 8px; color-scheme: dark; min-width: 0;
+    }
+    .hours { text-align: center; justify-content: center; }
+    .hours .v { font-size: 1.6rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .hours .sub { font-size: .72rem; color: var(--muted); }
+    .shift-note { color: var(--muted); font-size: .75rem; text-align: center; margin-top: 10px; }
 
     /* Tally */
     .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; margin-top: 14px; }
@@ -145,6 +158,16 @@
   </header>
 
   <section class="card">
+    <p class="section-label">Shift</p>
+    <div class="shift">
+      <div class="field"><label for="startTime">Start</label><input type="time" id="startTime" step="300"></div>
+      <div class="field"><label for="endTime">End</label><input type="time" id="endTime" step="300"></div>
+      <div class="field hours"><label>Hours</label><div class="v" id="vHours">0:00</div><div class="sub" id="hoursSub"></div></div>
+    </div>
+    <div class="shift-note" id="shiftNote"></div>
+  </section>
+
+  <section class="card">
     <p class="section-label">Daily Operating Plan</p>
     <div class="segmented" role="radiogroup" aria-label="Daily Operating Plan" id="plans"></div>
     <div class="tally">
@@ -199,7 +222,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.0.0";
+  var VERSION = "2.1.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   var PLANS = {
@@ -212,16 +235,28 @@
   var STORE_KEY = "ps9-dop-tracker";
   var LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24" fill="currentColor" aria-label="Locked"><path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V7Z"/></svg>';
 
-  // Per-employee state: { present, locked, moved: null | "PS5" }. Saved for today only,
-  // so a refresh keeps the board and a new day starts clean.
-  var today = new Date().toDateString();
+  // The shift runs past midnight, so anything before noon belongs to the previous
+  // day's shift. That keeps the board, start time, and hours intact at 12 AM.
+  var ROLLOVER_HOUR = 12;
+  var shiftDay = new Date();
+  if (shiftDay.getHours() < ROLLOVER_HOUR) shiftDay.setDate(shiftDay.getDate() - 1);
+  shiftDay.setHours(0, 0, 0, 0);
+  var today = shiftDay.toDateString();
+
+  // Fridays start at 7:30 PM; every other night starts at 8:00 PM.
+  function defaultStart(day) {
+    return day.getDay() === 5 ? "19:30" : "20:00";
+  }
+
+  // Per-employee state: { present, locked, moved: null | "PS5" }. Saved for the current
+  // shift only, so a refresh keeps the board and the next shift starts clean.
   var state = load();
   var openName = null;
 
   function blank() {
     var people = {};
     STAFF.forEach(function (n) { people[n] = { present: false, locked: false, moved: null }; });
-    return { date: today, plan: "7-2", people: people };
+    return { date: today, plan: "7-2", start: defaultStart(shiftDay), end: "", people: people };
   }
 
   function load() {
@@ -230,6 +265,8 @@
       var saved = JSON.parse(localStorage.getItem(STORE_KEY));
       if (saved && saved.date === today) {
         if (PLANS[saved.plan]) s.plan = saved.plan;
+        if (saved.start) s.start = saved.start;
+        if (saved.end) s.end = saved.end;
         STAFF.forEach(function (n) { if (saved.people && saved.people[n]) s.people[n] = saved.people[n]; });
       }
     } catch (e) {}
@@ -238,6 +275,32 @@
 
   function save() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  // "HH:MM" on the shift day. A time before noon is after midnight, so it falls on
+  // the next calendar day (an 8 PM start with a 2 AM end is 6 hours).
+  function shiftTime(hhmm) {
+    var parts = hhmm.split(':');
+    var d = new Date(shiftDay);
+    d.setHours(+parts[0], +parts[1], 0, 0);
+    if (+parts[0] < ROLLOVER_HOUR) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  function fmtClock(d) {
+    return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function renderHours() {
+    var start = shiftTime(state.start || defaultStart(shiftDay));
+    var end = state.end ? shiftTime(state.end) : new Date();
+    var mins = Math.max(0, Math.floor((end - start) / 60000));
+    document.getElementById('vHours').textContent = Math.floor(mins / 60) + ':' + ('0' + mins % 60).slice(-2);
+    document.getElementById('hoursSub').textContent =
+      state.end ? (mins / 60).toFixed(2) + ' hrs total' : end < start ? 'Not started' : 'Running';
+    document.getElementById('shiftNote').textContent =
+      (new Date() < start ? 'Starts ' : 'Started ') + fmtClock(start) + ' ' + start.toLocaleDateString(undefined, { weekday: 'short' }) +
+      (state.end ? ' · Ended ' + fmtClock(end) + ' ' + end.toLocaleDateString(undefined, { weekday: 'short' }) : ' · Leave End blank for a live count');
   }
 
   function requiredFor(key) {
@@ -440,7 +503,24 @@
   document.getElementById('sClose').addEventListener('click', function () { sheet.close(); });
 
   document.getElementById('date').textContent =
-    new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' · v' + VERSION;
+    shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;
+
+  var startEl = document.getElementById('startTime');
+  var endEl = document.getElementById('endTime');
+  startEl.value = state.start;
+  endEl.value = state.end;
+  startEl.addEventListener('change', function () {
+    state.start = startEl.value || defaultStart(shiftDay);
+    startEl.value = state.start;
+    save(); renderHours();
+  });
+  endEl.addEventListener('change', function () {
+    state.end = endEl.value;
+    save(); renderHours();
+  });
+  setInterval(renderHours, 30000);
+
+  renderHours();
   render();
 </script>
 </body>

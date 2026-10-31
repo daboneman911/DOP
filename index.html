@@ -336,7 +336,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.9.0";
+  var VERSION = "2.9.1";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, plus one belt tender on every plan, so 7-2
   // requires 7 + 2 + 1 = 10 people on the floor.
@@ -679,14 +679,16 @@
     }
     var form = document.createElement('form');
     form.className = 'add-form';
-    form.innerHTML = '<input type="text" maxlength="20" placeholder="Name" aria-label="New employee name" autocomplete="off">' +
+    form.innerHTML = '<input type="text" maxlength="20" placeholder="Name" aria-label="New employee name" autocomplete="off" autocapitalize="words">' +
       '<button type="submit" aria-label="Add">✓</button><button type="button" aria-label="Cancel">✕</button>';
     var input = form.querySelector('input');
     input.value = addDraft;
     input.addEventListener('input', function () { addDraft = input.value; });
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var name = input.value.trim().replace(/\s+/g, ' ');
+      // Capitalize the first letter of each word ("jose luis" -> "Jose Luis").
+      var name = input.value.trim().replace(/\s+/g, ' ')
+        .replace(/(^|[\s-])(\S)/g, function (m, sep, c) { return sep + c.toUpperCase(); });
       if (!name) { input.focus(); return; }
       var taken = roster().some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
       if (taken) { toast(name + ' is already on the roster'); input.select(); return; }

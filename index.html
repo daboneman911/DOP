@@ -11,7 +11,7 @@
       --good: #34d399; --good-bg: rgba(52, 211, 153, .14); --short: #fb7185;
       --over: #fbbf24; --moved: #60a5fa; --moved-bg: rgba(96, 165, 250, .12);
       --cut: #fb923c; --cut-bg: rgba(251, 146, 60, .10);
-      --g-regular: #6366f1; --g-spare: #cbd5e1; --g-added: #f472b6;
+      --g-regular: #6366f1; --g-double: #cbd5e1; --g-added: #f472b6;
       --sched: #c084fc; --sched-bg: rgba(192, 132, 252, .12);
       --role-unloader: #818cf8; --role-sweep: #fbbf24; --role-belt: #2dd4bf;
       --radius: 16px;
@@ -142,10 +142,10 @@
       cursor: pointer; color: var(--muted); font-size: 1.2rem; line-height: 1;
     }
     .add-emp { border-style: dashed; background: transparent; }
-    /* Staff group: a colored stripe down the left edge of the tile (PS9 regulars, spares,
+    /* Staff group: a colored stripe down the left edge of the tile (PS9 regulars, doubles,
        added for the shift), separate from the tile color, which shows working/cut/etc. */
     .emp.g-regular { box-shadow: inset 4px 0 0 var(--g-regular); }
-    .emp.g-spare { box-shadow: inset 4px 0 0 var(--g-spare); }
+    .emp.g-double { box-shadow: inset 4px 0 0 var(--g-double); }
     .emp.g-added { box-shadow: inset 4px 0 0 var(--g-added); }
     .roster-group {
       grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 6px 0 -2px;
@@ -367,11 +367,11 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.11.0";
-  // Regular PS9 staff in seniority order, then spares. Both stay on the roster every shift.
+  var VERSION = "2.11.1";
+  // Regular PS9 staff in seniority order, then doubles. Both stay on the roster every shift.
   var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot"];
-  var SPARES = ["Solis", "Damian", "Johnny", "Albert"];
-  var STAFF = REGULARS.concat(SPARES);
+  var DOUBLES = ["Solis", "Damian", "Johnny", "Albert"];
+  var STAFF = REGULARS.concat(DOUBLES);
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   // The belt tender is timed and documented but is not part of the DOP.
   var PLANS = {
@@ -645,7 +645,7 @@
     el.innerHTML = '';
     [
       { key: 'regular', label: 'PS9', names: REGULARS },
-      { key: 'spare', label: 'Spares', names: SPARES },
+      { key: 'double', label: 'Doubles', names: DOUBLES },
       { key: 'added', label: 'Added this shift', names: state.extra }
     ].forEach(function (group) {
       if (!group.names.length) return;

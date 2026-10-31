@@ -37,7 +37,7 @@
     .section-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
 
     /* Shift start */
-    .start-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    .start-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
       background: linear-gradient(135deg, rgba(99, 102, 241, .22), rgba(99, 102, 241, .06)), var(--surface);
       border-color: rgba(99, 102, 241, .35); }
     .start-time { display: flex; align-items: center; gap: 6px; font-size: 2.2rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
@@ -53,8 +53,16 @@
       -webkit-appearance: none; appearance: none; border: 0; font-size: 16px;
     }
     .colon { color: var(--muted); font-weight: 700; padding-bottom: 4px; }
-    .start-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-    .start-status { color: var(--muted); font-size: .8rem; font-weight: 600; text-align: right; }
+    .emp-start { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+    .emp-start .start-time { font-size: 1.5rem; }
+    .emp-start .digit { padding: 6px 8px; border-radius: 10px; }
+    .emp-start-note { color: var(--muted); font-size: .8rem; font-weight: 600; }
+    .emp-start-note.late { color: var(--cut); }
+    .start-card .section-label { margin-bottom: 8px; }
+    .start-card .start-time { justify-content: center; }
+    .start-side { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .start-btns:empty { display: none; }
+    .start-status { color: var(--muted); font-size: .8rem; font-weight: 600; }
     .start-status b { color: var(--text); font-variant-numeric: tabular-nums; }
     .start-btns { display: flex; gap: 6px; }
     .pill-btn {
@@ -281,6 +289,18 @@
       <div class="avatar" id="sAvatar"></div>
       <div><h2 id="sName"></h2><p id="sStatus"></p></div>
     </div>
+    <div id="eStartWrap" hidden>
+      <p class="section-label">Start time</p>
+      <div class="emp-start">
+        <div class="start-time">
+          <label class="digit"><span id="eHText"></span><select id="eH" aria-label="Employee start hour"></select></label>
+          <span class="colon">:</span>
+          <label class="digit"><span id="eMText"></span><select id="eM" aria-label="Employee start minute"></select></label>
+        </div>
+        <span class="emp-start-note" id="eStartNote"></span>
+        <button class="pill-btn ghost" id="eStartReset" type="button">Use shift start</button>
+      </div>
+    </div>
     <p class="section-label">Role</p>
     <div class="roles" id="sRoles"></div>
     <div class="actions" id="sActions"></div>
@@ -296,7 +316,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.6.0";
+  var VERSION = "2.7.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, plus one belt tender on every plan, so 7-2
   // requires 7 + 2 + 1 = 10 people on the floor.
@@ -615,13 +635,7 @@
   function renderStart() {
     var start = shiftStart();
     var now = Date.now();
-    var d = new Date(start);
-    var hEl = document.getElementById('startH');
-    var mEl = document.getElementById('startM');
-    if (document.activeElement !== hEl) hEl.value = ('0' + d.getHours()).slice(-2);
-    if (document.activeElement !== mEl) mEl.value = ('0' + d.getMinutes()).slice(-2);
-    document.getElementById('startHText').textContent = ('0' + d.getHours()).slice(-2);
-    document.getElementById('startMText').textContent = ('0' + d.getMinutes()).slice(-2);
+    setPicker('start', start);
 
     var scheduled = defaultStart(shiftDay);
     document.getElementById('startStatus').innerHTML =
@@ -646,11 +660,54 @@
     }
   }
 
+  function fillPicker(hEl, mEl) {
+    for (var h = 0; h < 24; h++) hEl.add(new Option(('0' + h).slice(-2)));
+    for (var m = 0; m < 60; m++) mEl.add(new Option(('0' + m).slice(-2)));
+  }
+
+  function setPicker(prefix, ms) {
+    var d = new Date(ms);
+    var hh = ('0' + d.getHours()).slice(-2), mm = ('0' + d.getMinutes()).slice(-2);
+    var hEl = document.getElementById(prefix + 'H'), mEl = document.getElementById(prefix + 'M');
+    if (document.activeElement !== hEl) hEl.value = hh;
+    if (document.activeElement !== mEl) mEl.value = mm;
+    document.getElementById(prefix + 'HText').textContent = hh;
+    document.getElementById(prefix + 'MText').textContent = mm;
+  }
+
+  // An employee's own start, for a late arrival: it moves the start of their first clock
+  // segment. A time at or before the shift start means "from shift start".
+  function buildEmpStartPicker() {
+    var hEl = document.getElementById('eH');
+    var mEl = document.getElementById('eM');
+    fillPicker(hEl, mEl);
+    function onPick() {
+      var p = state.people[openName];
+      if (!p || !p.segs.length) return;
+      var t = shiftTime(hEl.value + ':' + mEl.value).getTime();
+      p.segs[0].in = t <= shiftStart() ? null : t;
+      save(); render();
+      toast(openName + ' starts ' + clock(empStart(p)));
+    }
+    hEl.addEventListener('change', onPick);
+    mEl.addEventListener('change', onPick);
+    document.getElementById('eStartReset').addEventListener('click', function () {
+      var p = state.people[openName];
+      if (!p || !p.segs.length) return;
+      p.segs[0].in = null;
+      save(); render();
+    });
+  }
+
+  function empStart(p) {
+    var start = shiftStart();
+    return p.segs[0].in === null ? start : Math.max(start, p.segs[0].in);
+  }
+
   function buildStartPickers() {
     var hEl = document.getElementById('startH');
     var mEl = document.getElementById('startM');
-    for (var h = 0; h < 24; h++) hEl.add(new Option(('0' + h).slice(-2)));
-    for (var m = 0; m < 60; m++) mEl.add(new Option(('0' + m).slice(-2)));
+    fillPicker(hEl, mEl);
     function onPick() {
       var t = shiftTime(hEl.value + ':' + mEl.value).getTime();
       state.started = t === shiftTime(defaultStart(shiftDay)).getTime() ? null : t;
@@ -714,7 +771,7 @@
     var start = shiftStart();
     rows.forEach(function (row) {
       var p = row.p;
-      var first = p.segs[0].in === null ? start : Math.max(start, p.segs[0].in);
+      var first = empStart(p);
       var out = onClock(p) ? '<span class="on">on</span>'
         : p.moved ? '<span class="moved">' + clock(lastSeg(p).out) + ' ' + p.moved + '</span>'
         : '<span class="cut">' + clock(lastSeg(p).out) + '</span>';
@@ -785,6 +842,18 @@
     document.getElementById('sAvatar').textContent = name.charAt(0);
     document.getElementById('sName').textContent = name;
     document.getElementById('sStatus').textContent = statusText(p) + (p.locked ? ' · Locked' : '');
+
+    var startWrap = document.getElementById('eStartWrap');
+    startWrap.hidden = !p.segs.length;
+    if (p.segs.length) {
+      var es = empStart(p);
+      setPicker('e', es);
+      var late = minuteOf(es) - minuteOf(shiftStart());
+      var note = document.getElementById('eStartNote');
+      note.className = 'emp-start-note' + (late > 0 ? ' late' : '');
+      note.textContent = late > 0 ? 'Late ' + hrs(late) : 'Shift start';
+      document.getElementById('eStartReset').hidden = late <= 0;
+    }
 
     var rolesEl = document.getElementById('sRoles');
     rolesEl.innerHTML = '';
@@ -868,6 +937,7 @@
     shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;
 
   buildStartPickers();
+  buildEmpStartPicker();
   setupReset();
   setInterval(render, 30000);
   render();

@@ -206,6 +206,13 @@
     .sheet-head .avatar { width: 42px; height: 42px; font-size: 1rem; }
     .sheet-head h2 { margin: 0; font-size: 1.15rem; }
     .sheet-head p { margin: 2px 0 0; color: var(--muted); font-size: .85rem; }
+    .sheet-x {
+      margin-left: auto; align-self: flex-start; width: 36px; height: 36px; flex: none; border-radius: 50%;
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+      font-size: 1rem; font-weight: 700; line-height: 1; cursor: pointer;
+    }
+    .sheet-x:hover { color: var(--text); border-color: rgba(255, 255, 255, .2); }
+    .sheet-x:focus:not(:focus-visible) { outline: none; }
     .roles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
     .roles button {
       padding: 10px 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg);
@@ -308,6 +315,9 @@
     <div class="sheet-head">
       <div class="avatar" id="sAvatar"></div>
       <div><h2 id="sName"></h2><p id="sStatus"></p></div>
+      <!-- autofocus: opening the panel focuses this instead of the start-time picker,
+           which iOS would otherwise open straight away. -->
+      <button class="sheet-x" id="sX" type="button" aria-label="Close" autofocus>✕</button>
     </div>
     <div id="eStartWrap" hidden>
       <p class="section-label" id="eStartLabel">Start time</p>
@@ -336,7 +346,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.9.1";
+  var VERSION = "2.9.2";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, plus one belt tender on every plan, so 7-2
   // requires 7 + 2 + 1 = 10 people on the floor.
@@ -1040,10 +1050,12 @@
     document.getElementById('sLines').hidden = true;
     renderSheet();
     sheet.showModal();
+    document.getElementById('sX').focus();
   }
   sheet.addEventListener('close', function () { openName = null; });
   sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
   document.getElementById('sClose').addEventListener('click', function () { sheet.close(); });
+  document.getElementById('sX').addEventListener('click', function () { sheet.close(); });
 
   document.getElementById('date').textContent =
     shiftDay.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' shift · v' + VERSION;

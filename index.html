@@ -11,6 +11,7 @@
       --good: #34d399; --good-bg: rgba(52, 211, 153, .14); --short: #fb7185;
       --over: #fbbf24; --moved: #60a5fa; --moved-bg: rgba(96, 165, 250, .12);
       --cut: #fb923c; --cut-bg: rgba(251, 146, 60, .10);
+      --g-regular: #6366f1; --g-spare: #cbd5e1; --g-added: #f472b6;
       --sched: #c084fc; --sched-bg: rgba(192, 132, 252, .12);
       --role-unloader: #818cf8; --role-sweep: #fbbf24; --role-belt: #2dd4bf;
       --radius: 16px;
@@ -141,14 +142,26 @@
       cursor: pointer; color: var(--muted); font-size: 1.2rem; line-height: 1;
     }
     .add-emp { border-style: dashed; background: transparent; }
-    /* Employees added for the shift: a "+" badge on the avatar. */
-    .emp.added .avatar { position: relative; }
-    .emp.added .avatar::after {
+    /* Staff group: a colored stripe down the left edge of the tile (PS9 regulars, spares,
+       added for the shift), separate from the tile color, which shows working/cut/etc. */
+    .emp.g-regular { box-shadow: inset 4px 0 0 var(--g-regular); }
+    .emp.g-spare { box-shadow: inset 4px 0 0 var(--g-spare); }
+    .emp.g-added { box-shadow: inset 4px 0 0 var(--g-added); }
+    .roster-group {
+      grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 6px 0 -2px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    }
+    .roster-group:first-child { margin-top: 0; }
+    .roster-group i { width: 10px; height: 10px; border-radius: 3px; }
+    .roster-group span { color: var(--muted); font-weight: 600; letter-spacing: 0; text-transform: none; }
+    /* Added employees also get a "+" badge on the avatar. */
+    .emp.g-added .avatar { position: relative; }
+    .emp.g-added .avatar::after {
       content: "+"; position: absolute; right: -4px; bottom: -4px; width: 15px; height: 15px; border-radius: 50%;
-      display: grid; place-items: center; background: var(--accent); color: #fff; font-size: .7rem; font-weight: 800;
+      display: grid; place-items: center; background: var(--g-added); color: #3b0a24; font-size: .7rem; font-weight: 800;
       line-height: 1; border: 2px solid var(--surface-2);
     }
-    .emp-sub .added-tag { color: var(--accent); }
+    .emp-sub .added-tag { color: var(--g-added); }
     .add-emp .avatar { background: rgba(99, 102, 241, .2); color: var(--accent); font-size: 1rem; }
     .add-emp .emp-label { color: var(--muted); }
     .add-form { display: flex; gap: 6px; padding: 6px; width: 100%; }
@@ -354,8 +367,11 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.10.0";
-  var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert", "Robert"];
+  var VERSION = "2.11.0";
+  // Regular PS9 staff in seniority order, then spares. Both stay on the roster every shift.
+  var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot"];
+  var SPARES = ["Solis", "Damian", "Johnny", "Albert"];
+  var STAFF = REGULARS.concat(SPARES);
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   // The belt tender is timed and documented but is not part of the DOP.
   var PLANS = {
@@ -627,63 +643,73 @@
   function renderRoster(roles) {
     var el = document.getElementById('roster');
     el.innerHTML = '';
-    roster().forEach(function (name) {
-      var p = state.people[name];
-      var tile = document.createElement('div');
-      tile.className = 'emp' + (p.moved ? ' moved' : isCut(p) ? ' cut' : isScheduled(p) ? ' scheduled' : onClock(p) ? ' present' : '') + (p.locked ? ' locked' : '');
-
-      var nameBtn = document.createElement('button');
-      nameBtn.type = 'button';
-      nameBtn.className = 'emp-name';
-      nameBtn.setAttribute('aria-pressed', onClock(p) ? 'true' : 'false');
-      nameBtn.innerHTML = '<span class="avatar"></span><span class="emp-label"></span>' + (p.locked ? LOCK_SVG : '');
-      nameBtn.querySelector('.avatar').textContent = name.charAt(0);
-      var added = state.extra.indexOf(name) >= 0;
-      if (added) {
-        tile.classList.add('added');
-        nameBtn.querySelector('.avatar').title = 'Added for this shift';
-      }
-      var label = nameBtn.querySelector('.emp-label');
-      label.textContent = name;
-
-      // Sub-line: moved line, cut time, else their role when it is not a plain unloader
-      // (the green tile already says working), else "Working".
-      var role = roles.eff[name] || (p.role !== "auto" ? p.role : null);
-      var subHtml = p.moved ? '→ ' + p.moved
-        : isCut(p) ? 'Cut ' + clock(lastSeg(p).out)
-        : isScheduled(p) ? 'Starts ' + clock(empStart(p))
-        : role && role !== 'unloader' ? '<span class="r-' + role + (roles.auto[name] ? ' auto' : '') + '">' + roleLabel(role) + '</span>'
-        : onClock(p) ? 'Working'
-        : added ? '<span class="added-tag">Added</span>' : '';
-      if (subHtml) {
-        var sub = document.createElement('span');
-        sub.className = 'emp-sub';
-        sub.innerHTML = subHtml;
-        label.appendChild(sub);
-      }
-
-      nameBtn.addEventListener('click', function () {
-        if (p.locked || p.moved || isCut(p)) {
-          tile.classList.remove('shake'); void tile.offsetWidth; tile.classList.add('shake');
-          toast(name + (p.moved ? ' is on ' + p.moved : isCut(p) ? ' is cut' : ' is locked') + ' — use ⋯ options');
-          return;
-        }
-        if (onClock(p)) removeFromShift(p); else markWorking(p);
-        save(); render();
-      });
-
-      var optBtn = document.createElement('button');
-      optBtn.type = 'button';
-      optBtn.className = 'emp-opts';
-      optBtn.setAttribute('aria-label', 'Options for ' + name);
-      optBtn.textContent = '⋯';
-      optBtn.addEventListener('click', function () { openSheet(name); });
-
-      tile.appendChild(nameBtn);
-      tile.appendChild(optBtn);
-      el.appendChild(tile);
+    [
+      { key: 'regular', label: 'PS9', names: REGULARS },
+      { key: 'spare', label: 'Spares', names: SPARES },
+      { key: 'added', label: 'Added this shift', names: state.extra }
+    ].forEach(function (group) {
+      if (!group.names.length) return;
+      var head = document.createElement('div');
+      head.className = 'roster-group';
+      head.innerHTML = '<i style="background:var(--g-' + group.key + ')"></i>' + group.label + ' <span>' + group.names.length + '</span>';
+      el.appendChild(head);
+      group.names.forEach(function (name) { el.appendChild(rosterTile(name, group.key, roles)); });
     });
     el.appendChild(addTile());
+  }
+
+  function rosterTile(name, groupKey, roles) {
+    var p = state.people[name];
+    var tile = document.createElement('div');
+    tile.className = 'emp g-' + groupKey + (p.moved ? ' moved' : isCut(p) ? ' cut' : isScheduled(p) ? ' scheduled' : onClock(p) ? ' present' : '') + (p.locked ? ' locked' : '');
+
+    var nameBtn = document.createElement('button');
+    nameBtn.type = 'button';
+    nameBtn.className = 'emp-name';
+    nameBtn.setAttribute('aria-pressed', onClock(p) ? 'true' : 'false');
+    nameBtn.innerHTML = '<span class="avatar"></span><span class="emp-label"></span>' + (p.locked ? LOCK_SVG : '');
+    nameBtn.querySelector('.avatar').textContent = name.charAt(0);
+    var added = groupKey === 'added';
+    if (added) nameBtn.querySelector('.avatar').title = 'Added for this shift';
+    var label = nameBtn.querySelector('.emp-label');
+    label.textContent = name;
+
+    // Sub-line: moved line, cut time, else their role when it is not a plain unloader
+    // (the green tile already says working), else "Working".
+    var role = roles.eff[name] || (p.role !== "auto" ? p.role : null);
+    var subHtml = p.moved ? '→ ' + p.moved
+      : isCut(p) ? 'Cut ' + clock(lastSeg(p).out)
+      : isScheduled(p) ? 'Starts ' + clock(empStart(p))
+      : role && role !== 'unloader' ? '<span class="r-' + role + (roles.auto[name] ? ' auto' : '') + '">' + roleLabel(role) + '</span>'
+      : onClock(p) ? 'Working'
+      : added ? '<span class="added-tag">Added</span>' : '';
+    if (subHtml) {
+      var sub = document.createElement('span');
+      sub.className = 'emp-sub';
+      sub.innerHTML = subHtml;
+      label.appendChild(sub);
+    }
+
+    nameBtn.addEventListener('click', function () {
+      if (p.locked || p.moved || isCut(p)) {
+        tile.classList.remove('shake'); void tile.offsetWidth; tile.classList.add('shake');
+        toast(name + (p.moved ? ' is on ' + p.moved : isCut(p) ? ' is cut' : ' is locked') + ' — use ⋯ options');
+        return;
+      }
+      if (onClock(p)) removeFromShift(p); else markWorking(p);
+      save(); render();
+    });
+
+    var optBtn = document.createElement('button');
+    optBtn.type = 'button';
+    optBtn.className = 'emp-opts';
+    optBtn.setAttribute('aria-label', 'Options for ' + name);
+    optBtn.textContent = '⋯';
+    optBtn.addEventListener('click', function () { openSheet(name); });
+
+    tile.appendChild(nameBtn);
+    tile.appendChild(optBtn);
+    return tile;
   }
 
   // "+ Add employee" tile: opens an inline name field. Added people last for this shift.

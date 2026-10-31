@@ -141,6 +141,14 @@
       cursor: pointer; color: var(--muted); font-size: 1.2rem; line-height: 1;
     }
     .add-emp { border-style: dashed; background: transparent; }
+    /* Employees added for the shift: a "+" badge on the avatar. */
+    .emp.added .avatar { position: relative; }
+    .emp.added .avatar::after {
+      content: "+"; position: absolute; right: -4px; bottom: -4px; width: 15px; height: 15px; border-radius: 50%;
+      display: grid; place-items: center; background: var(--accent); color: #fff; font-size: .7rem; font-weight: 800;
+      line-height: 1; border: 2px solid var(--surface-2);
+    }
+    .emp-sub .added-tag { color: var(--accent); }
     .add-emp .avatar { background: rgba(99, 102, 241, .2); color: var(--accent); font-size: 1rem; }
     .add-emp .emp-label { color: var(--muted); }
     .add-form { display: flex; gap: 6px; padding: 6px; width: 100%; }
@@ -346,14 +354,14 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.9.2";
-  var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
-  // A plan is written unloaders-sweeps, plus one belt tender on every plan, so 7-2
-  // requires 7 + 2 + 1 = 10 people on the floor.
+  var VERSION = "2.10.0";
+  var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert", "Robert"];
+  // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
+  // The belt tender is timed and documented but is not part of the DOP.
   var PLANS = {
-    "5-2": { unloaders: 5, sweeps: 2, belt: 1 },
-    "6-2": { unloaders: 6, sweeps: 2, belt: 1 },
-    "7-2": { unloaders: 7, sweeps: 2, belt: 1 }
+    "5-2": { unloaders: 5, sweeps: 2 },
+    "6-2": { unloaders: 6, sweeps: 2 },
+    "7-2": { unloaders: 7, sweeps: 2 }
   };
   var ROLES = [
     { key: "unloader", one: "Unloader" },
@@ -485,10 +493,10 @@
     return total;
   }
 
-  // Effective role for everyone on the clock. Explicit roles win; open sweep slots, then
-  // the belt slot, go to "auto" people. People already on the floor go before anyone still
-  // scheduled; then whoever already holds that role keeps it, so a new check-in never
-  // reshuffles anyone's hours; the rest are filled latest check-in first.
+  // Effective role for everyone on the clock. Explicit roles win (belt tender is only ever
+  // set by hand); open sweep slots go to "auto" people. People already on the floor go
+  // before anyone still scheduled; then whoever already holds sweep keeps it, so a new
+  // check-in never reshuffles anyone's hours; the rest are filled latest check-in first.
   // Remaining "auto" people are unloaders. "auto" marks the ones picked automatically.
   function assignRoles() {
     var plan = PLANS[state.plan];
@@ -501,8 +509,8 @@
     var pool = working
       .filter(function (n) { return state.people[n].role === "auto"; })
       .sort(function (a, b) { return state.people[b].at - state.people[a].at; });
-    ["sweep", "belt"].forEach(function (role) {
-      var need = (role === "sweep" ? plan.sweeps : plan.belt) -
+    ["sweep"].forEach(function (role) {
+      var need = plan.sweeps -
         working.filter(function (n) { return eff[n] === role; }).length;
       var holding = function (n) {
         var log = state.people[n].roleLog;
@@ -559,7 +567,7 @@
 
   function requiredFor(key) {
     var p = PLANS[key];
-    return p ? p.unloaders + p.sweeps + p.belt : 0;
+    return p ? p.unloaders + p.sweeps : 0;
   }
 
   // Clock actions
@@ -630,6 +638,11 @@
       nameBtn.setAttribute('aria-pressed', onClock(p) ? 'true' : 'false');
       nameBtn.innerHTML = '<span class="avatar"></span><span class="emp-label"></span>' + (p.locked ? LOCK_SVG : '');
       nameBtn.querySelector('.avatar').textContent = name.charAt(0);
+      var added = state.extra.indexOf(name) >= 0;
+      if (added) {
+        tile.classList.add('added');
+        nameBtn.querySelector('.avatar').title = 'Added for this shift';
+      }
       var label = nameBtn.querySelector('.emp-label');
       label.textContent = name;
 
@@ -640,7 +653,8 @@
         : isCut(p) ? 'Cut ' + clock(lastSeg(p).out)
         : isScheduled(p) ? 'Starts ' + clock(empStart(p))
         : role && role !== 'unloader' ? '<span class="r-' + role + (roles.auto[name] ? ' auto' : '') + '">' + roleLabel(role) + '</span>'
-        : onClock(p) ? 'Working' : '';
+        : onClock(p) ? 'Working'
+        : added ? '<span class="added-tag">Added</span>' : '';
       if (subHtml) {
         var sub = document.createElement('span');
         sub.className = 'emp-sub';
@@ -873,7 +887,7 @@
         : '<span class="cut">' + clock(lastSeg(p).out) + '</span>';
       var tr = document.createElement('tr');
       tr.innerHTML = '<td></td><td class="muted"></td><td>' + clock(first) + '</td><td>' + out + '</td><td>' + hrs(row.mins) + '</td>';
-      tr.children[0].textContent = row.name + (p.segs.length > 1 ? ' *' : '');
+      tr.children[0].textContent = row.name + (state.extra.indexOf(row.name) >= 0 ? ' (added)' : '') + (p.segs.length > 1 ? ' *' : '');
       tr.children[1].textContent = row.roles.map(roleLabel).join(' → ');
       body.appendChild(tr);
     });
@@ -895,8 +909,9 @@
     var roles = assignRoles();
     var counts = { unloader: 0, sweep: 0, belt: 0 };
     Object.keys(roles.eff).forEach(function (n) { counts[roles.eff[n]]++; });
-    // Scheduled (staggered) people already count toward staffing.
-    var count = counts.unloader + counts.sweep + counts.belt;
+    // Only unloaders and sweeps count toward the DOP; scheduled (staggered) people
+    // already count.
+    var count = counts.unloader + counts.sweep;
     var scheduled = roster().filter(function (n) { return isScheduled(state.people[n]); }).length;
     var diff = count - dop;
     var down = Math.max(0, -diff);
@@ -914,7 +929,7 @@
     document.getElementById('split').innerHTML =
       '<span><i class="role-dot unloader"></i>Unloaders <b>' + counts.unloader + '/' + plan.unloaders + '</b></span>' +
       '<span><i class="role-dot sweep"></i>Sweeps <b>' + counts.sweep + '/' + plan.sweeps + '</b></span>' +
-      '<span><i class="role-dot belt"></i>Belt <b>' + counts.belt + '/' + plan.belt + '</b></span>' +
+      '<span><i class="role-dot belt"></i>Belt <b>' + counts.belt + '</b></span>' +
       (scheduled ? '<span style="color:var(--sched)">' + scheduled + ' scheduled</span>' : '') +
       '<span class="status">' + (diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : down + ' needed') + '</span>';
 

@@ -11,6 +11,7 @@
       --good: #34d399; --good-bg: rgba(52, 211, 153, .14); --short: #fb7185;
       --over: #fbbf24; --moved: #60a5fa; --moved-bg: rgba(96, 165, 250, .12);
       --cut: #fb923c; --cut-bg: rgba(251, 146, 60, .10);
+      --sched: #c084fc; --sched-bg: rgba(192, 132, 252, .12);
       --role-unloader: #818cf8; --role-sweep: #fbbf24; --role-belt: #2dd4bf;
       --radius: 16px;
     }
@@ -58,6 +59,7 @@
     .emp-start .digit { padding: 6px 8px; border-radius: 10px; }
     .emp-start-note { color: var(--muted); font-size: .8rem; font-weight: 600; }
     .emp-start-note.late { color: var(--cut); }
+    .emp-start-note.sched { color: var(--sched); }
     .start-card .section-label { margin-bottom: 8px; }
     .start-card .start-time { justify-content: center; }
     .start-side { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -138,10 +140,27 @@
       border: 0; border-left: 1px solid var(--border); background: transparent; width: 36px; flex: none;
       cursor: pointer; color: var(--muted); font-size: 1.2rem; line-height: 1;
     }
+    .add-emp { border-style: dashed; background: transparent; }
+    .add-emp .avatar { background: rgba(99, 102, 241, .2); color: var(--accent); font-size: 1rem; }
+    .add-emp .emp-label { color: var(--muted); }
+    .add-form { display: flex; gap: 6px; padding: 6px; width: 100%; }
+    .add-form input {
+      flex: 1; min-width: 0; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--accent);
+      background: var(--bg); color: var(--text); font: inherit; font-size: 16px; font-weight: 600;
+    }
+    .add-form input:focus { outline: none; }
+    .add-form button {
+      width: 34px; flex: none; border: 0; border-radius: 8px; background: var(--surface); color: var(--muted);
+      cursor: pointer; font-weight: 700;
+    }
+    .add-form button[type="submit"] { background: var(--accent); color: #fff; }
     .emp-opts:hover { color: var(--text); background: rgba(255, 255, 255, .04); }
     .emp.present { background: var(--good-bg); border-color: rgba(52, 211, 153, .5); }
     .emp.present .avatar { background: var(--good); color: #052e1f; }
     .emp.present .emp-sub { color: var(--good); }
+    .emp.scheduled { background: var(--sched-bg); border-color: rgba(192, 132, 252, .5); }
+    .emp.scheduled .avatar { background: var(--sched); color: #240b36; }
+    .emp.scheduled .emp-sub { color: var(--sched); }
     .emp.cut { background: var(--cut-bg); border-color: rgba(251, 146, 60, .45); border-style: dashed; }
     .emp.cut .avatar { background: var(--cut); color: #2a1204; }
     .emp.cut .emp-sub { color: var(--cut); }
@@ -167,6 +186,7 @@
     th:last-child, td:last-child { text-align: right; }
     td.muted { color: var(--muted); }
     td .on { color: var(--good); font-weight: 700; }
+    td .sched { color: var(--sched); font-weight: 700; }
     td .cut { color: var(--cut); }
     td .moved { color: var(--moved); }
     tfoot td { font-weight: 800; }
@@ -290,7 +310,7 @@
       <div><h2 id="sName"></h2><p id="sStatus"></p></div>
     </div>
     <div id="eStartWrap" hidden>
-      <p class="section-label">Start time</p>
+      <p class="section-label" id="eStartLabel">Start time</p>
       <div class="emp-start">
         <div class="start-time">
           <label class="digit"><span id="eHText"></span><select id="eH" aria-label="Employee start hour"></select></label>
@@ -316,7 +336,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.7.0";
+  var VERSION = "2.9.0";
   var STAFF = ["Tre", "Russell", "Matt", "Luis", "Elliot", "Pablo", "David", "Eddie", "Gilbert", "Solis", "Johnny", "Damian", "Albert"];
   // A plan is written unloaders-sweeps, plus one belt tender on every plan, so 7-2
   // requires 7 + 2 + 1 = 10 people on the floor.
@@ -371,7 +391,8 @@
   function blank() {
     var people = {};
     STAFF.forEach(function (n) { people[n] = blankPerson(); });
-    return { date: today, plan: "7-2", started: null, people: people };
+    // extra: people added for this shift who are not on the regular staff list.
+    return { date: today, plan: "7-2", started: null, extra: [], people: people };
   }
 
   function load() {
@@ -381,7 +402,10 @@
       if (saved && saved.date === today) {
         if (PLANS[saved.plan]) s.plan = saved.plan;
         if (saved.started) s.started = saved.started;
-        STAFF.forEach(function (n) {
+        (saved.extra || []).forEach(function (n) {
+          if (!s.people[n]) { s.extra.push(n); s.people[n] = blankPerson(); }
+        });
+        roster(s).forEach(function (n) {
           var p = saved.people && saved.people[n];
           if (!p) return;
           s.people[n] = Object.assign(blankPerson(), p);
@@ -395,6 +419,11 @@
       }
     } catch (e) {}
     return s;
+  }
+
+  // Everyone on the board this shift: the regular staff, then anyone added.
+  function roster(st) {
+    return STAFF.concat((st || state).extra);
   }
 
   function save() {
@@ -427,6 +456,11 @@
 
   function lastSeg(p) { return p.segs[p.segs.length - 1]; }
   function onClock(p) { return p.present && !p.moved && p.segs.length > 0 && lastSeg(p).out === null; }
+  // Marked working with a start that hasn't arrived yet (a staggered start). They count
+  // toward staffing now; their hours begin at their start.
+  function isScheduled(p) {
+    return onClock(p) && p.segs.length === 1 && p.segs[0].in !== null && Date.now() < empStart(p);
+  }
   function isCut(p) { return p.present && !p.moved && p.segs.length > 0 && lastSeg(p).out !== null; }
 
   function minutesFor(p, now) {
@@ -442,13 +476,14 @@
   }
 
   // Effective role for everyone on the clock. Explicit roles win; open sweep slots, then
-  // the belt slot, go to "auto" people. Whoever already holds that role keeps it, so a new
-  // check-in never reshuffles anyone's hours; the rest are filled latest check-in first.
+  // the belt slot, go to "auto" people. People already on the floor go before anyone still
+  // scheduled; then whoever already holds that role keeps it, so a new check-in never
+  // reshuffles anyone's hours; the rest are filled latest check-in first.
   // Remaining "auto" people are unloaders. "auto" marks the ones picked automatically.
   function assignRoles() {
     var plan = PLANS[state.plan];
     var eff = {}, auto = {};
-    var working = STAFF.filter(function (n) { return onClock(state.people[n]); });
+    var working = roster().filter(function (n) { return onClock(state.people[n]); });
     working.forEach(function (n) {
       var r = state.people[n].role;
       eff[n] = r === "auto" ? "unloader" : r;
@@ -463,7 +498,10 @@
         var log = state.people[n].roleLog;
         return log.length && log[log.length - 1].role === role ? 1 : 0;
       };
-      pool.sort(function (a, b) { return holding(b) - holding(a) || state.people[b].at - state.people[a].at; });
+      var here = function (n) { return isScheduled(state.people[n]) ? 0 : 1; };
+      pool.sort(function (a, b) {
+        return here(b) - here(a) || holding(b) - holding(a) || state.people[b].at - state.people[a].at;
+      });
       while (need-- > 0 && pool.length) {
         var n = pool.shift();
         eff[n] = role; auto[n] = true;
@@ -540,6 +578,7 @@
     var now = Date.now();
     if (p.moved) return "Moved to " + p.moved + (p.segs.length ? ' · ' + hrs(minutesFor(p, now)) + ' on PS9' : '');
     if (isCut(p)) return "Cut at " + clock(lastSeg(p).out) + " · " + hrs(minutesFor(p, now));
+    if (isScheduled(p)) return "Scheduled · starts " + clock(empStart(p));
     if (onClock(p)) return "On the clock · " + hrs(minutesFor(p, now));
     return "Not working";
   }
@@ -570,10 +609,10 @@
   function renderRoster(roles) {
     var el = document.getElementById('roster');
     el.innerHTML = '';
-    STAFF.forEach(function (name) {
+    roster().forEach(function (name) {
       var p = state.people[name];
       var tile = document.createElement('div');
-      tile.className = 'emp' + (p.moved ? ' moved' : isCut(p) ? ' cut' : onClock(p) ? ' present' : '') + (p.locked ? ' locked' : '');
+      tile.className = 'emp' + (p.moved ? ' moved' : isCut(p) ? ' cut' : isScheduled(p) ? ' scheduled' : onClock(p) ? ' present' : '') + (p.locked ? ' locked' : '');
 
       var nameBtn = document.createElement('button');
       nameBtn.type = 'button';
@@ -589,6 +628,7 @@
       var role = roles.eff[name] || (p.role !== "auto" ? p.role : null);
       var subHtml = p.moved ? '→ ' + p.moved
         : isCut(p) ? 'Cut ' + clock(lastSeg(p).out)
+        : isScheduled(p) ? 'Starts ' + clock(empStart(p))
         : role && role !== 'unloader' ? '<span class="r-' + role + (roles.auto[name] ? ' auto' : '') + '">' + roleLabel(role) + '</span>'
         : onClock(p) ? 'Working' : '';
       if (subHtml) {
@@ -619,6 +659,47 @@
       tile.appendChild(optBtn);
       el.appendChild(tile);
     });
+    el.appendChild(addTile());
+  }
+
+  // "+ Add employee" tile: opens an inline name field. Added people last for this shift.
+  // The roster redraws every 30 seconds, so the typed name is kept in addDraft.
+  var addOpen = false, addDraft = '';
+  function addTile() {
+    var tile = document.createElement('div');
+    tile.className = 'emp add-emp';
+    if (!addOpen) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'emp-name';
+      b.innerHTML = '<span class="avatar">+</span><span class="emp-label">Add employee</span>';
+      b.addEventListener('click', function () { addOpen = true; render(); });
+      tile.appendChild(b);
+      return tile;
+    }
+    var form = document.createElement('form');
+    form.className = 'add-form';
+    form.innerHTML = '<input type="text" maxlength="20" placeholder="Name" aria-label="New employee name" autocomplete="off">' +
+      '<button type="submit" aria-label="Add">✓</button><button type="button" aria-label="Cancel">✕</button>';
+    var input = form.querySelector('input');
+    input.value = addDraft;
+    input.addEventListener('input', function () { addDraft = input.value; });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = input.value.trim().replace(/\s+/g, ' ');
+      if (!name) { input.focus(); return; }
+      var taken = roster().some(function (n) { return n.toLowerCase() === name.toLowerCase(); });
+      if (taken) { toast(name + ' is already on the roster'); input.select(); return; }
+      state.extra.push(name);
+      state.people[name] = blankPerson();
+      addOpen = false; addDraft = '';
+      save(); render();
+      toast(name + ' added for this shift');
+    });
+    form.querySelector('button[type="button"]').addEventListener('click', function () { addOpen = false; addDraft = ''; render(); });
+    tile.appendChild(form);
+    setTimeout(function () { input.focus(); }, 0);
+    return tile;
   }
 
   function pillBtn(text, ghost, fn) {
@@ -683,7 +764,9 @@
     fillPicker(hEl, mEl);
     function onPick() {
       var p = state.people[openName];
-      if (!p || !p.segs.length) return;
+      if (!p || p.moved) return;
+      // Picking a start for someone not yet on the board schedules them.
+      if (!p.segs.length) markWorking(p);
       var t = shiftTime(hEl.value + ':' + mEl.value).getTime();
       p.segs[0].in = t <= shiftStart() ? null : t;
       save(); render();
@@ -748,7 +831,7 @@
     var now = Date.now();
     var byRole = { unloader: 0, sweep: 0, belt: 0 };
     var rows = [], total = 0, idle = [];
-    STAFF.forEach(function (n) {
+    roster().forEach(function (n) {
       var p = state.people[n];
       if (!p.segs.length) { if (!p.moved) idle.push(n); return; }
       var split = roleMinutes(p, now);
@@ -772,7 +855,8 @@
     rows.forEach(function (row) {
       var p = row.p;
       var first = empStart(p);
-      var out = onClock(p) ? '<span class="on">on</span>'
+      var out = isScheduled(p) ? '<span class="sched">sched</span>'
+        : onClock(p) ? '<span class="on">on</span>'
         : p.moved ? '<span class="moved">' + clock(lastSeg(p).out) + ' ' + p.moved + '</span>'
         : '<span class="cut">' + clock(lastSeg(p).out) + '</span>';
       var tr = document.createElement('tr');
@@ -799,7 +883,9 @@
     var roles = assignRoles();
     var counts = { unloader: 0, sweep: 0, belt: 0 };
     Object.keys(roles.eff).forEach(function (n) { counts[roles.eff[n]]++; });
+    // Scheduled (staggered) people already count toward staffing.
     var count = counts.unloader + counts.sweep + counts.belt;
+    var scheduled = roster().filter(function (n) { return isScheduled(state.people[n]); }).length;
     var diff = count - dop;
     var down = Math.max(0, -diff);
 
@@ -817,6 +903,7 @@
       '<span><i class="role-dot unloader"></i>Unloaders <b>' + counts.unloader + '/' + plan.unloaders + '</b></span>' +
       '<span><i class="role-dot sweep"></i>Sweeps <b>' + counts.sweep + '/' + plan.sweeps + '</b></span>' +
       '<span><i class="role-dot belt"></i>Belt <b>' + counts.belt + '/' + plan.belt + '</b></span>' +
+      (scheduled ? '<span style="color:var(--sched)">' + scheduled + ' scheduled</span>' : '') +
       '<span class="status">' + (diff === 0 ? 'On plan' : diff > 0 ? '+' + diff + ' over plan' : down + ' needed') + '</span>';
 
     renderPlans();
@@ -844,15 +931,29 @@
     document.getElementById('sStatus').textContent = statusText(p) + (p.locked ? ' · Locked' : '');
 
     var startWrap = document.getElementById('eStartWrap');
-    startWrap.hidden = !p.segs.length;
-    if (p.segs.length) {
-      var es = empStart(p);
-      setPicker('e', es);
-      var late = minuteOf(es) - minuteOf(shiftStart());
+    // The start picker shows for anyone on PS9. For someone not on the board yet it
+    // schedules them; otherwise it moves their start (late or staggered).
+    startWrap.hidden = !!p.moved;
+    if (!p.moved) {
       var note = document.getElementById('eStartNote');
-      note.className = 'emp-start-note' + (late > 0 ? ' late' : '');
-      note.textContent = late > 0 ? 'Late ' + hrs(late) : 'Shift start';
-      document.getElementById('eStartReset').hidden = late <= 0;
+      var reset = document.getElementById('eStartReset');
+      if (!p.segs.length) {
+        document.getElementById('eStartLabel').textContent = 'Schedule start';
+        setPicker('e', shiftStart());
+        note.className = 'emp-start-note';
+        note.textContent = 'Pick a time to schedule';
+        reset.hidden = true;
+      } else {
+        document.getElementById('eStartLabel').textContent = 'Start time';
+        var es = empStart(p);
+        setPicker('e', es);
+        var after = minuteOf(es) - minuteOf(shiftStart());
+        var future = Date.now() < es;
+        note.className = 'emp-start-note' + (future ? ' sched' : after > 0 ? ' late' : '');
+        note.textContent = future ? 'Scheduled · in ' + hrs(minuteOf(es) - minuteOf(Date.now()))
+          : after > 0 ? '+' + hrs(after) + ' after shift start' : 'Shift start';
+        reset.hidden = after <= 0;
+      }
     }
 
     var rolesEl = document.getElementById('sRoles');
@@ -900,6 +1001,15 @@
     if (p.present && !p.moved) {
       acts.appendChild(action('✕', 'Remove from shift (clears hours)', function () {
         removeFromShift(p); save(); render();
+      }));
+    }
+    if (state.extra.indexOf(name) >= 0) {
+      acts.appendChild(action('🗑', 'Delete from roster (added employee)', function () {
+        state.extra.splice(state.extra.indexOf(name), 1);
+        delete state.people[name];
+        sheet.close();
+        save(); render();
+        toast(name + ' removed');
       }));
     }
 

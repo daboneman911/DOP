@@ -299,7 +299,6 @@
   <section class="card">
     <div class="roster-head">
       <p class="section-label">Roster</p>
-      <span class="hint">Tap name = working · ⋯ = cut, role &amp; options</span>
     </div>
     <div class="roster" id="roster"></div>
   </section>
@@ -367,11 +366,13 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.12.0";
+  var VERSION = "2.13.1";
   // Regular PS9 staff in seniority order, then doubles. Both stay on the roster every shift.
   var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot", "Lorena"];
-  var DOUBLES = ["Solis", "Damian", "Johnny", "Albert"];
+  var DOUBLES = ["Solis", "Damian", "Johnny"];
   var STAFF = REGULARS.concat(DOUBLES);
+  // Default roles for people left on Auto: picking another role in their options wins.
+  var DEFAULT_ROLES = { Robert: "belt", Tre: "sweep", Eddie: "sweep" };
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
   // The belt tender is timed and documented but is not part of the DOP.
   var PLANS = {
@@ -510,8 +511,8 @@
     return total;
   }
 
-  // Effective role for everyone on the clock. Explicit roles win (belt tender is only ever
-  // set by hand); open sweep slots go to "auto" people. People already on the floor go
+  // Effective role for everyone on the clock. Explicit roles win, then DEFAULT_ROLES
+  // (belt tender is otherwise only set by hand); open sweep slots go to "auto" people. People already on the floor go
   // before anyone still scheduled; then whoever already holds sweep keeps it, so a new
   // check-in never reshuffles anyone's hours; the rest are filled latest check-in first.
   // Remaining "auto" people are unloaders. "auto" marks the ones picked automatically.
@@ -521,10 +522,11 @@
     var working = roster().filter(function (n) { return onClock(state.people[n]); });
     working.forEach(function (n) {
       var r = state.people[n].role;
-      eff[n] = r === "auto" ? "unloader" : r;
+      if (r === "auto" && DEFAULT_ROLES[n]) { eff[n] = DEFAULT_ROLES[n]; auto[n] = true; }
+      else eff[n] = r === "auto" ? "unloader" : r;
     });
     var pool = working
-      .filter(function (n) { return state.people[n].role === "auto"; })
+      .filter(function (n) { return state.people[n].role === "auto" && !DEFAULT_ROLES[n]; })
       .sort(function (a, b) { return state.people[b].at - state.people[a].at; });
     ["sweep"].forEach(function (role) {
       var need = plan.sweeps -

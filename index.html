@@ -95,7 +95,7 @@
     .role-dot.belt { background: var(--role-belt); }
 
     /* Plan selector */
-    .segmented { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; }
+    .segmented { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; }
     .segmented button {
       border: 0; background: transparent; padding: 10px; border-radius: 9px; font-weight: 700;
       color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
@@ -367,9 +367,9 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.11.1";
+  var VERSION = "2.12.0";
   // Regular PS9 staff in seniority order, then doubles. Both stay on the roster every shift.
-  var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot"];
+  var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot", "Lorena"];
   var DOUBLES = ["Solis", "Damian", "Johnny", "Albert"];
   var STAFF = REGULARS.concat(DOUBLES);
   // A plan is written unloaders-sweeps, so 7-2 requires 7 + 2 = 9 people on the floor.
@@ -377,7 +377,8 @@
   var PLANS = {
     "5-2": { unloaders: 5, sweeps: 2 },
     "6-2": { unloaders: 6, sweeps: 2 },
-    "7-2": { unloaders: 7, sweeps: 2 }
+    "7-2": { unloaders: 7, sweeps: 2 },
+    "8-2": { unloaders: 8, sweeps: 2 }
   };
   var ROLES = [
     { key: "unloader", one: "Unloader" },

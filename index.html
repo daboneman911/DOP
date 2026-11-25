@@ -95,11 +95,12 @@
     .role-dot.belt { background: var(--role-belt); }
 
     /* Plan selector */
-    .segmented { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; }
+    .segmented { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--bg); border-radius: 12px; padding: 4px; gap: 4px; }
     .segmented button {
       border: 0; background: transparent; padding: 10px; border-radius: 9px; font-weight: 700;
       color: var(--muted); cursor: pointer; transition: background .15s, color .15s;
     }
+    .segmented button small { display: block; font-size: 10px; font-weight: 600; line-height: 1.1; opacity: .8; }
     .segmented button[aria-checked="true"] { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, .4); }
 
     /* Tally */
@@ -366,7 +367,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.13.1";
+  var VERSION = "2.14.0";
   // Regular PS9 staff in seniority order, then doubles. Both stay on the roster every shift.
   var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot", "Lorena"];
   var DOUBLES = ["Solis", "Damian", "Johnny"];
@@ -379,7 +380,8 @@
     "5-2": { unloaders: 5, sweeps: 2 },
     "6-2": { unloaders: 6, sweeps: 2 },
     "7-2": { unloaders: 7, sweeps: 2 },
-    "8-2": { unloaders: 8, sweeps: 2 }
+    "8-2": { unloaders: 8, sweeps: 2 },
+    "9-2": { unloaders: 9, sweeps: 2, note: "*peak" }
   };
   var ROLES = [
     { key: "unloader", one: "Unloader" },
@@ -638,6 +640,11 @@
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', key === state.plan ? 'true' : 'false');
       b.textContent = key;
+      if (PLANS[key].note) {
+        var note = document.createElement('small');
+        note.textContent = PLANS[key].note;
+        b.appendChild(note);
+      }
       b.addEventListener('click', function () { state.plan = key; save(); render(); });
       el.appendChild(b);
     });

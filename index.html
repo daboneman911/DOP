@@ -367,7 +367,7 @@
 
 <script>
   // Bump on every change that ships, so the version on screen shows which build is loaded.
-  var VERSION = "2.14.0";
+  var VERSION = "2.14.1";
   // Regular PS9 staff in seniority order, then doubles. Both stay on the roster every shift.
   var REGULARS = ["Robert", "Russell", "David", "Matt", "Tre", "Eddie", "Gilbert", "Luis", "Pablo", "Elliot", "Lorena"];
   var DOUBLES = ["Solis", "Damian", "Johnny"];
@@ -640,11 +640,10 @@
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', key === state.plan ? 'true' : 'false');
       b.textContent = key;
-      if (PLANS[key].note) {
-        var note = document.createElement('small');
-        note.textContent = PLANS[key].note;
-        b.appendChild(note);
-      }
+      // Every button gets the note line (blank when there is no note) so the labels line up.
+      var note = document.createElement('small');
+      note.textContent = PLANS[key].note || '\u00a0';
+      b.appendChild(note);
       b.addEventListener('click', function () { state.plan = key; save(); render(); });
       el.appendChild(b);
     });
